@@ -100,6 +100,7 @@ export default function MapPage() {
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
   const lastPos = useRef({ x: 0, y: 0 })
+  const minZoomRef = useRef(0.1)
   const tps = useMemo(() => buildTPS(CONTROL_POINTS), [])
 
   useEffect(() => {
@@ -107,6 +108,7 @@ export default function MapPage() {
     const cW = containerRef.current.clientWidth
     const cH = containerRef.current.clientHeight
     const zoom = Math.max(1, cH * IMG_W / (cW * IMG_H))
+    minZoomRef.current = cH * IMG_W / (cW * IMG_H)
     const panX = (cW - cW * zoom) / 2
     const panY = (cH - cW * (IMG_H / IMG_W) * zoom) / 2
     setTransform({ zoom, panX, panY })
@@ -162,9 +164,17 @@ export default function MapPage() {
       const rect = container.getBoundingClientRect()
       const mx = e.clientX - rect.left
       const my = e.clientY - rect.top
+      const minZoom = rect.height * IMG_W / (rect.width * IMG_H)
       setTransform(prev => {
-        const factor = e.deltaY > 0 ? 0.9 : 1.1
-        const newZoom = Math.min(20, prev.zoom * factor)
+        const factor = e.deltaY > 0 ? 0.95 : 1.05
+        const newZoom = Math.max(minZoom, Math.min(20, prev.zoom * factor))
+        if (newZoom <= minZoom) {
+          return {
+            zoom: minZoom,
+            panX: (rect.width - rect.width * minZoom) / 2,
+            panY: 0,
+          }
+        }
         return {
           zoom: newZoom,
           panX: mx - (mx - prev.panX) * (newZoom / prev.zoom),
