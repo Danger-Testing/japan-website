@@ -1,0 +1,725 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx xmlns:gpxdata="http://www.cluetrust.com/XML/GPXDATA/1/0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.topografix.com/GPX/1/1" version="1.1" creator="http://ridewithgps.com/" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.cluetrust.com/XML/GPXDATA/1/0 http://www.cluetrust.com/Schemas/gpxdata10.xsd">
+  <metadata>
+    <name>Tokyo-Osaka-R1-R23</name>
+    <link href="https://ridewithgps.com/routes/27060008">
+      <text>Tokyo-Osaka-R1-R23</text>
+    </link>
+    <time>2018-03-20T23:21:35Z</time>
+  </metadata>
+  <rte>
+    <name>Tokyo-Osaka-R1-R23</name>
+    <rtept lat="35.684058" lon="139.774484">
+      <name>Start</name>
+      <cmt>Start of route</cmt>
+    </rtept>
+    <rtept lat="35.459539" lon="139.62356">
+      <name>Right</name>
+      <cmt>右方向へ進み 東海道/国道1号線 に向かう</cmt>
+    </rtept>
+    <rtept lat="35.45911" lon="139.62332">
+      <name>Right</name>
+      <cmt>右方向へ進み 東海道/国道1号線 に入る</cmt>
+    </rtept>
+    <rtept lat="35.4148" lon="139.542849">
+      <name>Left</name>
+      <cmt>斜め左に折れてそのまま 東海道/国道1号線 を進む</cmt>
+    </rtept>
+    <rtept lat="35.40591" lon="139.53718">
+      <name>Left</name>
+      <cmt>吉田大橋（交差点） を左折する</cmt>
+    </rtept>
+    <rtept lat="35.40097" lon="139.53627">
+      <name>Straight</name>
+      <cmt>歩道を進む</cmt>
+    </rtept>
+    <rtept lat="35.39449" lon="139.53353">
+      <name>Right</name>
+      <cmt>右折する</cmt>
+    </rtept>
+    <rtept lat="35.39482" lon="139.52994">
+      <name>Left</name>
+      <cmt>八坂神社前（交差点） を左折して 東海道/国道1号線 に入る</cmt>
+    </rtept>
+    <rtept lat="35.38903" lon="139.52131">
+      <name>Left</name>
+      <cmt>大坂上（交差点） で斜め左に折れてそのまま 東海道/国道1号線 を進む</cmt>
+    </rtept>
+    <rtept lat="35.36475" lon="139.49765">
+      <name>Right</name>
+      <cmt>右方向へ進んで 東海道/国道1号線 を進む</cmt>
+    </rtept>
+    <rtept lat="35.36085" lon="139.49462">
+      <name>Straight</name>
+      <cmt>藤沢バイパス出口（交差点）を直進して、そのまま県道30号線へ進む</cmt>
+    </rtept>
+    <rtept lat="35.32465" lon="139.43996">
+      <name>Right</name>
+      <cmt>右折する</cmt>
+    </rtept>
+    <rtept lat="35.324779" lon="139.408269">
+      <name>Straight</name>
+      <cmt>東海岸会館前（交差点） を直進する</cmt>
+    </rtept>
+    <rtept lat="35.32285" lon="139.39174">
+      <name>Straight</name>
+      <cmt>直進する</cmt>
+    </rtept>
+    <rtept lat="35.32029" lon="139.37674">
+      <name>Right</name>
+      <cmt>右折して国道134号線に入る</cmt>
+    </rtept>
+    <rtept lat="35.314929" lon="139.33603">
+      <name>Left</name>
+      <cmt>斜め左に折れてそのまま 国道134号線 を進む</cmt>
+    </rtept>
+    <rtept lat="35.31248" lon="139.3259">
+      <name>Left</name>
+      <cmt>斜め左に折れてそのまま 国道134号線 を進む (大磯駅・国道１号 の表示)</cmt>
+    </rtept>
+    <rtept lat="35.31112" lon="139.31648">
+      <name>Left</name>
+      <cmt>大磯駅入口（交差点） を左折して 東海道/国道1号線 に入る</cmt>
+    </rtept>
+    <rtept lat="35.25268" lon="139.16505">
+      <name>Left</name>
+      <cmt>新宿（交差点） を左折する</cmt>
+    </rtept>
+    <rtept lat="35.251959" lon="139.1659">
+      <name>Right</name>
+      <cmt>右折する</cmt>
+    </rtept>
+    <rtept lat="35.24835" lon="139.15975">
+      <name>Straight</name>
+      <cmt>本町（交差点）を直進して、そのまま東海道/国道1号線へ進む</cmt>
+    </rtept>
+    <rtept lat="35.20091" lon="139.03087">
+      <name>Left</name>
+      <cmt>左折して東海道/国道1号線に入る</cmt>
+    </rtept>
+    <rtept lat="35.12516" lon="138.62473">
+      <name>Right</name>
+      <cmt>右折する</cmt>
+    </rtept>
+    <rtept lat="35.12592" lon="138.62383">
+      <name>Left</name>
+      <cmt>左折する</cmt>
+    </rtept>
+    <rtept lat="35.123309" lon="138.62035">
+      <name>Right</name>
+      <cmt>斜め右方向に進む</cmt>
+    </rtept>
+    <rtept lat="35.12342" lon="138.61876">
+      <name>Left</name>
+      <cmt>左折する</cmt>
+    </rtept>
+    <rtept lat="35.12301" lon="138.618689">
+      <name>Right</name>
+      <cmt>右折する</cmt>
+    </rtept>
+    <rtept lat="35.12306" lon="138.61406">
+      <name>Left</name>
+      <cmt>左折する</cmt>
+    </rtept>
+    <rtept lat="35.122369" lon="138.61304">
+      <name>Right</name>
+      <cmt>右折して 東海道/県道396号線 に向かう</cmt>
+    </rtept>
+    <rtept lat="35.12282" lon="138.61253">
+      <name>Left</name>
+      <cmt>左折して東海道/県道396号線に入る</cmt>
+    </rtept>
+    <rtept lat="35.11162" lon="138.57393">
+      <name>Left</name>
+      <cmt>神沢（交差点） で斜め左に折れる</cmt>
+    </rtept>
+    <rtept lat="35.10713" lon="138.566669">
+      <name>Straight</name>
+      <cmt>県道370号線を進む</cmt>
+    </rtept>
+    <rtept lat="35.0957" lon="138.55128">
+      <name>Left</name>
+      <cmt>斜め左に折れて東海道/県道396号線に入る</cmt>
+    </rtept>
+    <rtept lat="35.09392" lon="138.55107">
+      <name>Straight</name>
+      <cmt>ランプを進む</cmt>
+    </rtept>
+    <rtept lat="35.05742" lon="138.53299">
+      <name>Left</name>
+      <cmt>斜め左に折れて 東海道/国道1号線 に向かう</cmt>
+    </rtept>
+    <rtept lat="35.05489" lon="138.52956">
+      <name>Left</name>
+      <cmt>左折して東海道/国道1号線に入る</cmt>
+    </rtept>
+    <rtept lat="35.04489" lon="138.50283">
+      <name>Right</name>
+      <cmt>右折して 静清バイパス/国道1号線 に向かう</cmt>
+    </rtept>
+    <rtept lat="35.045229" lon="138.5027">
+      <name>Left</name>
+      <cmt>左折して 静清バイパス/国道1号線 に向かう</cmt>
+    </rtept>
+    <rtept lat="35.04497" lon="138.5007">
+      <name>Straight</name>
+      <cmt>静清バイパス/国道1号線 を直進する</cmt>
+    </rtept>
+    <rtept lat="35.03511" lon="138.47533">
+      <name>Left</name>
+      <cmt>左折してランプに入る</cmt>
+    </rtept>
+    <rtept lat="35.03326" lon="138.47216">
+      <name>Right</name>
+      <cmt>分岐点を右方向へ進む</cmt>
+    </rtept>
+    <rtept lat="35.033119" lon="138.471929">
+      <name>Right</name>
+      <cmt>分岐点を右方向へ進む</cmt>
+    </rtept>
+    <rtept lat="35.032649" lon="138.47105">
+      <name>Straight</name>
+      <cmt>ランプを進む</cmt>
+    </rtept>
+    <rtept lat="35.03255" lon="138.47088">
+      <name>Right</name>
+      <cmt>分岐点を右方向へ進む</cmt>
+    </rtept>
+    <rtept lat="35.03187" lon="138.46965">
+      <name>Straight</name>
+      <cmt>ランプを進む</cmt>
+    </rtept>
+    <rtept lat="35.03173" lon="138.46937">
+      <name>Right</name>
+      <cmt>分岐点を右方向へ進む</cmt>
+    </rtept>
+    <rtept lat="35.03074" lon="138.46756">
+      <name>Straight</name>
+      <cmt>ランプを進む</cmt>
+    </rtept>
+    <rtept lat="35.03062" lon="138.46737">
+      <name>Right</name>
+      <cmt>分岐点を右方向へ進む</cmt>
+    </rtept>
+    <rtept lat="35.02969" lon="138.46569">
+      <name>Right</name>
+      <cmt>分岐点を右方向へ進む</cmt>
+    </rtept>
+    <rtept lat="35.02962" lon="138.46555">
+      <name>Right</name>
+      <cmt>分岐点を右方向へ進む</cmt>
+    </rtept>
+    <rtept lat="35.02905" lon="138.46447">
+      <name>Straight</name>
+      <cmt>ランプを進む</cmt>
+    </rtept>
+    <rtept lat="35.02898" lon="138.464319">
+      <name>Right</name>
+      <cmt>分岐点を右方向へ進む</cmt>
+    </rtept>
+    <rtept lat="35.02849" lon="138.46344">
+      <name>Left</name>
+      <cmt>分岐点を左方向へ進む</cmt>
+    </rtept>
+    <rtept lat="35.02818" lon="138.46285">
+      <name>Straight</name>
+      <cmt>ランプを進む</cmt>
+    </rtept>
+    <rtept lat="35.02797" lon="138.46246">
+      <name>Right</name>
+      <cmt>分岐点を右方向へ進む</cmt>
+    </rtept>
+    <rtept lat="35.02594" lon="138.45898">
+      <name>Left</name>
+      <cmt>分岐点を左方向へ進む</cmt>
+    </rtept>
+    <rtept lat="35.02578" lon="138.45867">
+      <name>Right</name>
+      <cmt>分岐点を右方向へ進む</cmt>
+    </rtept>
+    <rtept lat="35.02543" lon="138.45795">
+      <name>Right</name>
+      <cmt>分岐点を右方向へ進む</cmt>
+    </rtept>
+    <rtept lat="35.02526" lon="138.45763">
+      <name>Straight</name>
+      <cmt>ランプを進む</cmt>
+    </rtept>
+    <rtept lat="35.0252" lon="138.45748">
+      <name>Right</name>
+      <cmt>分岐点を右方向へ進む</cmt>
+    </rtept>
+    <rtept lat="35.0235" lon="138.45445">
+      <name>Right</name>
+      <cmt>分岐点を右方向へ進む</cmt>
+    </rtept>
+    <rtept lat="35.02312" lon="138.45383">
+      <name>Left</name>
+      <cmt>分岐点を左方向へ進む</cmt>
+    </rtept>
+    <rtept lat="35.02301" lon="138.45361">
+      <name>Straight</name>
+      <cmt>ランプを進む</cmt>
+    </rtept>
+    <rtept lat="35.02258" lon="138.45283">
+      <name>Straight</name>
+      <cmt>静清バイパス/国道1号線 に向かって進む</cmt>
+    </rtept>
+    <rtept lat="35.02136" lon="138.45058">
+      <name>Left</name>
+      <cmt>分岐点を左方向へ進み 静清バイパス/国道1号線 に向かう</cmt>
+    </rtept>
+    <rtept lat="35.020269" lon="138.44859">
+      <name>Straight</name>
+      <cmt>静清バイパス/国道1号線 に向かって進む</cmt>
+    </rtept>
+    <rtept lat="35.01977" lon="138.44776">
+      <name>Right</name>
+      <cmt>分岐点を右方向へ進み 静清バイパス/国道1号線 に向かう</cmt>
+    </rtept>
+    <rtept lat="35.01926" lon="138.44688">
+      <name>Straight</name>
+      <cmt>静清バイパス/国道1号線 に向かって進む</cmt>
+    </rtept>
+    <rtept lat="35.01853" lon="138.44557">
+      <name>Right</name>
+      <cmt>分岐点を右方向へ進み 静清バイパス/国道1号線 に向かう</cmt>
+    </rtept>
+    <rtept lat="35.01751" lon="138.44357">
+      <name>Left</name>
+      <cmt>斜め左に折れて静清バイパス/国道1号線に入る</cmt>
+    </rtept>
+    <rtept lat="35.01132" lon="138.43228">
+      <name>Straight</name>
+      <cmt>県道67号線 方面の出口を出る</cmt>
+    </rtept>
+    <rtept lat="35.01063" lon="138.43076">
+      <name>Left</name>
+      <cmt>鳥坂Ｉ．Ｃ（交差点） で斜め左に折れて 県道67号線 に入る</cmt>
+    </rtept>
+    <rtept lat="35.00518" lon="138.42562">
+      <name>Left</name>
+      <cmt>東部団地入口（交差点） で斜め左に折れてそのまま 北街道/県道67号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.97484" lon="138.38551">
+      <name>Straight</name>
+      <cmt>江川町（交差点） を直進して 江川町通り に入る</cmt>
+    </rtept>
+    <rtept lat="34.968739" lon="138.38115">
+      <name>Straight</name>
+      <cmt>川辺変電所（交差点） を直進する</cmt>
+    </rtept>
+    <rtept lat="34.96644" lon="138.37958">
+      <name>Right</name>
+      <cmt>右折する</cmt>
+    </rtept>
+    <rtept lat="34.96652" lon="138.37939">
+      <name>Left</name>
+      <cmt>左折する</cmt>
+    </rtept>
+    <rtept lat="34.96444" lon="138.37797">
+      <name>Left</name>
+      <cmt>左折する</cmt>
+    </rtept>
+    <rtept lat="34.95079" lon="138.33296">
+      <name>Left</name>
+      <cmt>左方向へ進んで 東海道/国道1号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.92422" lon="138.29788">
+      <name>Left</name>
+      <cmt>斜め左方向に進む</cmt>
+    </rtept>
+    <rtept lat="34.92383" lon="138.29512">
+      <name>Left</name>
+      <cmt>左折する</cmt>
+    </rtept>
+    <rtept lat="34.92312" lon="138.28989">
+      <name>Straight</name>
+      <cmt>県道208号線を進む</cmt>
+    </rtept>
+    <rtept lat="34.90929" lon="138.281119">
+      <name>Straight</name>
+      <cmt>県道81号線を進む</cmt>
+    </rtept>
+    <rtept lat="34.90257" lon="138.28447">
+      <name>Straight</name>
+      <cmt>内谷新田（交差点） を直進して 東海道/県道381号線 に入る</cmt>
+    </rtept>
+    <rtept lat="34.837919" lon="138.17899">
+      <name>Straight</name>
+      <cmt>大津通り（交差点）を直進して、そのまま県道55号線へ進む (金谷駅 の表示)</cmt>
+    </rtept>
+    <rtept lat="34.83837" lon="138.17588">
+      <name>Straight</name>
+      <cmt>中央町（交差点） を直進して 県道381号線 に入る</cmt>
+    </rtept>
+    <rtept lat="34.82747" lon="138.132389">
+      <name>Straight</name>
+      <cmt>金谷扇町（交差点）を直進して、そのまま国道473号線へ進む</cmt>
+    </rtept>
+    <rtept lat="34.8268" lon="138.12959">
+      <name>Straight</name>
+      <cmt>宮崎町（交差点） を直進して 県道381号線 に入る</cmt>
+    </rtept>
+    <rtept lat="34.82199" lon="138.09836">
+      <name>Right</name>
+      <cmt>県道381号線 を右折して 東海道/国道1号線 に入る</cmt>
+    </rtept>
+    <rtept lat="34.80932" lon="138.08146">
+      <name>Straight</name>
+      <cmt>東海道/県道415号線 を直進する</cmt>
+    </rtept>
+    <rtept lat="34.77132" lon="137.97971">
+      <name>Left</name>
+      <cmt>左方向へ進む</cmt>
+    </rtept>
+    <rtept lat="34.76959" lon="137.97772">
+      <name>Straight</name>
+      <cmt>ランプを進んで 袋井バイパス/国道1号線 に入る</cmt>
+    </rtept>
+    <rtept lat="34.75931" lon="137.94202">
+      <name>Left</name>
+      <cmt>斜め左に折れて東海道/県道413号線に入る</cmt>
+    </rtept>
+    <rtept lat="34.73763" lon="137.88526">
+      <name>Left</name>
+      <cmt>斜め左に折れてそのまま 東海道/県道413号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.72388" lon="137.8531">
+      <name>Left</name>
+      <cmt>加茂川（交差点） を左折して 県道56号線 に入る</cmt>
+    </rtept>
+    <rtept lat="34.71654" lon="137.85249">
+      <name>Right</name>
+      <cmt>商工会議所前（交差点） を右折して 県道261号線 に入る</cmt>
+    </rtept>
+    <rtept lat="34.71617" lon="137.85084">
+      <name>Left</name>
+      <cmt>左折する</cmt>
+    </rtept>
+    <rtept lat="34.71044" lon="137.85006">
+      <name>Right</name>
+      <cmt>右折して県道260号線に入る</cmt>
+    </rtept>
+    <rtept lat="34.70846" lon="137.8434">
+      <name>Straight</name>
+      <cmt>天竜（交差点） を直進して 県道259号線 に入る</cmt>
+    </rtept>
+    <rtept lat="34.67722" lon="137.79778">
+      <name>Right</name>
+      <cmt>右折する</cmt>
+    </rtept>
+    <rtept lat="34.67724" lon="137.797149">
+      <name>Left</name>
+      <cmt>左折する</cmt>
+    </rtept>
+    <rtept lat="34.67702" lon="137.78575">
+      <name>Left</name>
+      <cmt>斜め左に折れて県道316号線に入る</cmt>
+    </rtept>
+    <rtept lat="34.67718" lon="137.78494">
+      <name>Left</name>
+      <cmt>左折する</cmt>
+    </rtept>
+    <rtept lat="34.67439" lon="137.783269">
+      <name>Right</name>
+      <cmt>右折する</cmt>
+    </rtept>
+    <rtept lat="34.67639" lon="137.75701">
+      <name>Left</name>
+      <cmt>大柳西（交差点） を左折して 浜松バイパス/国道1号線 に入る</cmt>
+    </rtept>
+    <rtept lat="34.67519" lon="137.7558">
+      <name>Left</name>
+      <cmt>左方向へ進んで 浜松バイパス/国道1号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.67213" lon="137.75067">
+      <name>Left</name>
+      <cmt>左方向へ進んで 浜松バイパス/国道1号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.67105" lon="137.74522">
+      <name>Left</name>
+      <cmt>左方向へ進んで 浜松バイパス/国道1号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.67045" lon="137.732319">
+      <name>Left</name>
+      <cmt>左方向へ進んで 浜松バイパス/国道1号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.67028" lon="137.728829">
+      <name>Left</name>
+      <cmt>左方向へ進んで 浜松バイパス/国道1号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.670499" lon="137.71711">
+      <name>Left</name>
+      <cmt>左方向へ進んで 浜松バイパス/国道1号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.67174" lon="137.708769">
+      <name>Left</name>
+      <cmt>左方向へ進んで 浜松バイパス/国道1号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.67301" lon="137.70029">
+      <name>Left</name>
+      <cmt>左方向へ進んで 浜松バイパス/国道1号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.67537" lon="137.68687">
+      <name>Left</name>
+      <cmt>左方向へ進んで 浜松バイパス/国道1号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.67825" lon="137.67726">
+      <name>Left</name>
+      <cmt>左方向へ進んで 浜松バイパス/国道1号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.67991" lon="137.67068">
+      <name>Left</name>
+      <cmt>左方向へ進んで 浜松バイパス/国道1号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.68079" lon="137.66073">
+      <name>Straight</name>
+      <cmt>東海道/国道301号線を進む</cmt>
+    </rtept>
+    <rtept lat="34.69385" lon="137.56688">
+      <name>Straight</name>
+      <cmt>栄町（交差点） を直進して 国道301号線 に入る</cmt>
+    </rtept>
+    <rtept lat="34.714329" lon="137.546789">
+      <name>Left</name>
+      <cmt>小名川（交差点） を左折して 県道3号線 に入る</cmt>
+    </rtept>
+    <rtept lat="34.71687" lon="137.50649">
+      <name>Right</name>
+      <cmt>右折する</cmt>
+    </rtept>
+    <rtept lat="34.7191" lon="137.50047">
+      <name>Right</name>
+      <cmt>右折する</cmt>
+    </rtept>
+    <rtept lat="34.7205" lon="137.50015">
+      <name>Left</name>
+      <cmt>左折する</cmt>
+    </rtept>
+    <rtept lat="34.72274" lon="137.49315">
+      <name>Left</name>
+      <cmt>左折して県道330号線に入る</cmt>
+    </rtept>
+    <rtept lat="34.72292" lon="137.49249">
+      <name>Straight</name>
+      <cmt>県道3号線 を直進する</cmt>
+    </rtept>
+    <rtept lat="34.72791" lon="137.4347">
+      <name>Right</name>
+      <cmt>火打坂（交差点） を右折する</cmt>
+    </rtept>
+    <rtept lat="34.73424" lon="137.433519">
+      <name>Left</name>
+      <cmt>左折する</cmt>
+    </rtept>
+    <rtept lat="34.73608" lon="137.42889">
+      <name>Left</name>
+      <cmt>左折する</cmt>
+    </rtept>
+    <rtept lat="34.74683" lon="137.41443">
+      <name>Left</name>
+      <cmt>左折して 東海道/国道1号線 に向かう</cmt>
+    </rtept>
+    <rtept lat="34.74681" lon="137.41403">
+      <name>Right</name>
+      <cmt>殿田橋（交差点） を右折して 東海道/国道1号線 に入る</cmt>
+    </rtept>
+    <rtept lat="34.76778" lon="137.39043">
+      <name>Right</name>
+      <cmt>西八町（交差点） を右折してそのまま 東海道/国道1号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.95845" lon="137.15705">
+      <name>Left</name>
+      <cmt>左方向へ進んで 東海道/国道1号線 を進む</cmt>
+    </rtept>
+    <rtept lat="35.09385" lon="136.92933">
+      <name>Left</name>
+      <cmt>前浜通（交差点） を左折して 環状線 に入る</cmt>
+    </rtept>
+    <rtept lat="35.08881" lon="136.89839">
+      <name>Right</name>
+      <cmt>大江町（交差点） を右折してそのまま 環状線 を進む</cmt>
+    </rtept>
+    <rtept lat="35.09531" lon="136.89895">
+      <name>Left</name>
+      <cmt>竜宮町（交差点） を左折して 名四国道/国道23号線 に入る</cmt>
+    </rtept>
+    <rtept lat="35.09931" lon="136.88596">
+      <name>Right</name>
+      <cmt>港消防署北（交差点） を右折する</cmt>
+    </rtept>
+    <rtept lat="35.10111" lon="136.87435">
+      <name>Straight</name>
+      <cmt>出口を出る</cmt>
+    </rtept>
+    <rtept lat="35.10102" lon="136.87071">
+      <name>Straight</name>
+      <cmt>出口を出る</cmt>
+    </rtept>
+    <rtept lat="35.101" lon="136.8698">
+      <name>Right</name>
+      <cmt>分岐点を右方向へ進む</cmt>
+    </rtept>
+    <rtept lat="35.10083" lon="136.86594">
+      <name>Left</name>
+      <cmt>斜め左方向に進む</cmt>
+    </rtept>
+    <rtept lat="35.10028" lon="136.862869">
+      <name>Straight</name>
+      <cmt>歩道を進む</cmt>
+    </rtept>
+    <rtept lat="35.10028" lon="136.86281">
+      <name>Straight</name>
+      <cmt>階段を 上る</cmt>
+    </rtept>
+    <rtept lat="35.097589" lon="136.85593">
+      <name>Straight</name>
+      <cmt>名四国道/国道23号線 を直進する</cmt>
+    </rtept>
+    <rtept lat="35.00161" lon="136.65784">
+      <name>Right</name>
+      <cmt>東富田町（交差点） を右折する</cmt>
+    </rtept>
+    <rtept lat="35.00192" lon="136.65748">
+      <name>Left</name>
+      <cmt>左折して 東海道/国道1号線 に向かう</cmt>
+    </rtept>
+    <rtept lat="35.00159" lon="136.65369">
+      <name>Left</name>
+      <cmt>左折して東海道/国道1号線に入る</cmt>
+    </rtept>
+    <rtept lat="34.93577" lon="136.59824">
+      <name>Right</name>
+      <cmt>追分（交差点） を右折して 東海道/県道407号線 に入る</cmt>
+    </rtept>
+    <rtept lat="34.92432" lon="136.58569">
+      <name>Right</name>
+      <cmt>小古曽東三丁目（交差点） で斜め右に折れて 東海道/国道1号線 に入る</cmt>
+    </rtept>
+    <rtept lat="34.85109" lon="136.40593">
+      <name>Right</name>
+      <cmt>斜め右方向に進む</cmt>
+    </rtept>
+    <rtept lat="34.85298" lon="136.3897">
+      <name>Straight</name>
+      <cmt>県道11号線 を直進する</cmt>
+    </rtept>
+    <rtept lat="34.85624" lon="136.38121">
+      <name>Left</name>
+      <cmt>左折して大和街道/国道25号線に入る</cmt>
+    </rtept>
+    <rtept lat="34.84054" lon="136.32076">
+      <name>Right</name>
+      <cmt>板屋（交差点） を右折して 大和街道/国道25号線 に入る</cmt>
+    </rtept>
+    <rtept lat="34.8415" lon="136.26114">
+      <name>Right</name>
+      <cmt>斜め右に折れてそのまま 大和街道 を進む</cmt>
+    </rtept>
+    <rtept lat="34.84076" lon="136.24425">
+      <name>Left</name>
+      <cmt>左折してそのまま 大和街道 を進む</cmt>
+    </rtept>
+    <rtept lat="34.84026" lon="136.24425">
+      <name>Right</name>
+      <cmt>右折してそのまま 大和街道 を進む</cmt>
+    </rtept>
+    <rtept lat="34.83826" lon="136.23498">
+      <name>Left</name>
+      <cmt>左折して伊賀コリドールロード/県道4号線に入る</cmt>
+    </rtept>
+    <rtept lat="34.83789" lon="136.23494">
+      <name>Right</name>
+      <cmt>右折して大和街道に入る</cmt>
+    </rtept>
+    <rtept lat="34.83207" lon="136.22618">
+      <name>Right</name>
+      <cmt>右折して大和街道/国道25号線に入る</cmt>
+    </rtept>
+    <rtept lat="34.788939" lon="136.14223">
+      <name>Straight</name>
+      <cmt>印代（交差点） を直進して 県道138号線 に入る</cmt>
+    </rtept>
+    <rtept lat="34.7749" lon="136.12378">
+      <name>Straight</name>
+      <cmt>小田西（交差点）を直進して、そのまま国道163号線へ進む</cmt>
+    </rtept>
+    <rtept lat="34.77603" lon="136.00837">
+      <name>Left</name>
+      <cmt>左折してそのまま 国道163号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.76897" lon="135.97835">
+      <name>Left</name>
+      <cmt>左折してそのまま 国道163号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.74604" lon="135.82058">
+      <name>Left</name>
+      <cmt>上狛四丁町（交差点） を左折して 国道24号線 に入る</cmt>
+    </rtept>
+    <rtept lat="34.73688" lon="135.80329">
+      <name>Straight</name>
+      <cmt>川ノ尻（交差点）を直進して、そのまま国道163号線へ進む</cmt>
+    </rtept>
+    <rtept lat="34.73149" lon="135.72195">
+      <name>Straight</name>
+      <cmt>高山大橋（交差点） を直進してそのまま 国道163号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.73532" lon="135.67997">
+      <name>Left</name>
+      <cmt>左折してそのまま 国道163号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.73509" lon="135.68176">
+      <name>Left</name>
+      <cmt>斜め左に折れてそのまま 国道163号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.73834" lon="135.66324">
+      <name>Left</name>
+      <cmt>左折する</cmt>
+    </rtept>
+    <rtept lat="34.73859" lon="135.66274">
+      <name>Left</name>
+      <cmt>左折して 国道163号線 に向かう</cmt>
+    </rtept>
+    <rtept lat="34.73879" lon="135.65783">
+      <name>Straight</name>
+      <cmt>国道163号線を進む</cmt>
+    </rtept>
+    <rtept lat="34.73851" lon="135.65204">
+      <name>Left</name>
+      <cmt>左折してそのまま 国道163号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.73816" lon="135.65109">
+      <name>Left</name>
+      <cmt>斜め左方向に進む</cmt>
+    </rtept>
+    <rtept lat="34.73798" lon="135.6466">
+      <name>Straight</name>
+      <cmt>ランプを進む</cmt>
+    </rtept>
+    <rtept lat="34.738639" lon="135.64569">
+      <name>Left</name>
+      <cmt>左折して清滝生駒道路/国道163号線に入る</cmt>
+    </rtept>
+    <rtept lat="34.71967" lon="135.597829">
+      <name>Left</name>
+      <cmt>三ツ島（交差点） を左折する</cmt>
+    </rtept>
+    <rtept lat="34.70605" lon="135.59303">
+      <name>Right</name>
+      <cmt>右折して府道8号線に入る</cmt>
+    </rtept>
+    <rtept lat="34.703449" lon="135.5716">
+      <name>Left</name>
+      <cmt>左方向へ進んで 府道8号線 を進む</cmt>
+    </rtept>
+    <rtept lat="34.70032" lon="135.5463">
+      <name>Straight</name>
+      <cmt>蒲生４（交差点） を直進して 京阪国道/国道1号線 に入る</cmt>
+    </rtept>
+    <rtept lat="34.69807" lon="135.50195">
+      <name>End</name>
+      <cmt>End of route</cmt>
+    </rtept>
+  </rte>
+</gpx>
