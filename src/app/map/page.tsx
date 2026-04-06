@@ -109,6 +109,8 @@ export default function MapPage() {
   const [routeCumDist, setRouteCumDist] = useState<number[]>([])
   const [transform, setTransform] = useState({ zoom: 1, panX: 0, panY: 0 })
   const [elapsed, setElapsed] = useState('')
+  const [aboutOpen, setAboutOpen] = useState(false)
+  const [aboutSlide, setAboutSlide] = useState(0)
   const clockTime = useCurrentTime()
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
@@ -329,9 +331,63 @@ export default function MapPage() {
     </div>
 
     {/* Bottom-right: about */}
-    <a href="/about" className="fixed bottom-8 right-8 text-white font-sans font-bold text-5xl uppercase cursor-pointer">
+    <button onClick={() => setAboutOpen(true)} className="fixed bottom-8 right-8 text-white font-sans font-bold text-5xl uppercase cursor-pointer">
       about
-    </a>
+    </button>
+
+    {/* About dialog */}
+    {aboutOpen && (() => {
+      const slides = ['toni', 'route', 'bike'] as const
+      const prev = () => setAboutSlide(s => (s + slides.length - 1) % slides.length)
+      const next = () => setAboutSlide(s => (s + 1) % slides.length)
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setAboutOpen(false)} />
+          <div className="relative bg-white text-black max-w-md w-full mx-4">
+
+            {/* Carousel nav */}
+            <div className="flex items-center justify-between border-b border-black/10">
+              <button onClick={prev} className="px-5 py-4 text-2xl font-bold hover:bg-black/5 transition-colors">‹</button>
+              <div className="flex gap-6">
+                {slides.map((s, i) => (
+                  <button
+                    key={s}
+                    onClick={() => setAboutSlide(i)}
+                    className={`py-4 font-sans font-bold text-sm uppercase tracking-widest transition-colors ${i === aboutSlide ? 'text-black border-b-2 border-black' : 'text-black/30'}`}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+              <button onClick={next} className="px-5 py-4 text-2xl font-bold hover:bg-black/5 transition-colors">›</button>
+            </div>
+
+            {/* Slide content */}
+            <div className="p-10 min-h-[30vh]">
+{aboutSlide === 0 && (
+                <>
+                  <h2 className="font-sans font-bold text-3xl uppercase mb-4">Toni</h2>
+                  <p className="font-sans text-lg">Placeholder — about Toni.</p>
+                </>
+              )}
+              {aboutSlide === 1 && (
+                <>
+                  <h2 className="font-sans font-bold text-3xl uppercase mb-4">Route</h2>
+                  <p className="font-sans text-lg">Placeholder — about the route.</p>
+                </>
+              )}
+              {aboutSlide === 2 && (
+                <>
+                  <h2 className="font-sans font-bold text-3xl uppercase mb-4">Bike</h2>
+                  <p className="font-sans text-lg">Placeholder — about the bike.</p>
+                </>
+              )}
+            </div>
+
+          </div>
+        </div>
+      )
+    })()}
 
     <div className="fixed bottom-12 left-0 pointer-events-none w-[384px] [container-type:inline-size]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
