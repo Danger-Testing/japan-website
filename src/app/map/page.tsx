@@ -148,10 +148,14 @@ export default function MapPage() {
         const cx = (minX + maxX) / 2
         const cy = (minY + maxY) / 2
         const scale = cW / IMG_W
+        const rawPanX = cW / 2 - cx * scale * zoom
+        const rawPanY = cH / 2 - cy * scale * zoom
+        const imgW = cW * zoom
+        const imgH = cW * zoom * IMG_H / IMG_W
         setTransform({
           zoom,
-          panX: cW / 2 - cx * scale * zoom,
-          panY: cH / 2 - cy * scale * zoom,
+          panX: Math.max(cW - imgW, Math.min(0, rawPanX)),
+          panY: Math.max(cH - imgH, Math.min(0, rawPanY)),
         })
       })
   }, [tps])
@@ -166,7 +170,7 @@ export default function MapPage() {
       const my = e.clientY - rect.top
       const minZoom = rect.height * IMG_W / (rect.width * IMG_H)
       setTransform(prev => {
-        const factor = e.deltaY > 0 ? 0.95 : 1.05
+        const factor = e.deltaY > 0 ? 0.98 : 1.02
         const newZoom = Math.max(minZoom, Math.min(20, prev.zoom * factor))
         if (newZoom <= minZoom) {
           return {
