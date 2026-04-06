@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation } from '@/hooks/useLocation'
 
 const CONTROL_POINTS = [
   { lat: 43.0618, lon: 141.3545, x: 1666, y:  645 },
@@ -70,6 +71,16 @@ function evalTPS(tps: ReturnType<typeof buildTPS>, lat: number, lon: number) {
   return { x, y }
 }
 
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
 function parseGpx(text: string): [number, number][] {
   const doc = new DOMParser().parseFromString(text, 'application/xml')
   const pts: [number, number][] = []
@@ -94,14 +105,55 @@ function useCurrentTime() {
 
 export default function MapPage() {
   const [routePts, setRoutePts] = useState<{ x: number; y: number }[]>([])
-  const [riderPos, setRiderPos] = useState<{ x: number; y: number } | null>(null)
+  const [routeGeo, setRouteGeo] = useState<[number, number][]>([])
+  const [routeCumDist, setRouteCumDist] = useState<number[]>([])
   const [transform, setTransform] = useState({ zoom: 1, panX: 0, panY: 0 })
-  const time = useCurrentTime()
+  const [elapsed, setElapsed] = useState('')
+  const clockTime = useCurrentTime()
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
   const lastPos = useRef({ x: 0, y: 0 })
   const minZoomRef = useRef(0.1)
   const tps = useMemo(() => buildTPS(CONTROL_POINTS), [])
+
+  const { location, isLive, sessionStart } = useLocation()
+
+  // Map rider lat/lng → image pixel position
+  const riderPos = useMemo(() => {
+    if (!location || !isLive) return null
+    return evalTPS(tps, location.lat, location.lng)
+  }, [location, isLive, tps])
+
+  // Distance along route to nearest point to rider
+  const riderKm = useMemo(() => {
+    if (!location || !isLive || routeGeo.length === 0) return null
+    let minDist = Infinity
+    let minIdx = 0
+    for (let i = 0; i < routeGeo.length; i++) {
+      const d = haversineKm(location.lat, location.lng, routeGeo[i][0], routeGeo[i][1])
+      if (d < minDist) { minDist = d; minIdx = i }
+    }
+    return routeCumDist[minIdx] ?? null
+  }, [location, isLive, routeGeo, routeCumDist])
+
+  // Elapsed ride time ticker
+  useEffect(() => {
+    if (!isLive || sessionStart === null) { setElapsed(''); return }
+    const update = () => {
+      const totalSecs = Math.floor((Date.now() - sessionStart) / 1000)
+      const h = Math.floor(totalSecs / 3600)
+      const m = Math.floor((totalSecs % 3600) / 60)
+      const s = totalSecs % 60
+      setElapsed(
+        h > 0
+          ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+          : `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+      )
+    }
+    update()
+    const id = setInterval(update, 1000)
+    return () => clearInterval(id)
+  }, [isLive, sessionStart])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -115,23 +167,20 @@ export default function MapPage() {
   }, [])
 
   useEffect(() => {
-    const es = new EventSource('/api/location')
-    es.onmessage = (e) => {
-      try {
-        const loc = JSON.parse(e.data) as { lat: number; lon: number }
-        setRiderPos(evalTPS(tps, loc.lat, loc.lon))
-      } catch {}
-    }
-    return () => es.close()
-  }, [tps])
-
-  useEffect(() => {
     fetch('/japan.gpx')
       .then(r => r.text())
       .then(text => {
         const raw = parseGpx(text)
         const pts = raw.map(([lat, lon]) => evalTPS(tps, lat, lon))
         setRoutePts(pts)
+        setRouteGeo(raw)
+
+        // Precompute cumulative distances in km along the route
+        const cumDist: number[] = [0]
+        for (let i = 1; i < raw.length; i++) {
+          cumDist.push(cumDist[i - 1] + haversineKm(raw[i-1][0], raw[i-1][1], raw[i][0], raw[i][1]))
+        }
+        setRouteCumDist(cumDist)
 
         if (pts.length === 0 || !containerRef.current) return
         const cW = containerRef.current.clientWidth
@@ -206,11 +255,14 @@ export default function MapPage() {
   const first = routePts[0]
   const last  = routePts[routePts.length - 1]
 
+  const kmDisplay = isLive && riderKm !== null ? `${riderKm.toFixed(1)}km` : '--'
+  const timeDisplay = isLive && elapsed ? elapsed : clockTime
+
   return (
     <>
     <div
       ref={containerRef}
-      className="w-full overflow-hidden cursor-grab active:cursor-grabbing select-none" style={{ height: '100dvh', backgroundColor: '#027581' }}
+      className="w-full overflow-hidden cursor-grab active:cursor-grabbing select-none" style={{ height: '100dvh', backgroundColor: '#027581', backgroundImage: 'url(/japan-bg-tile.png)', backgroundRepeat: 'repeat', backgroundSize: '512px 512px' }}
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
@@ -266,20 +318,20 @@ export default function MapPage() {
       </div>
     </div>
 
-    {/* Top-left: current time */}
-    <div className="fixed top-8 left-8 pointer-events-none text-white font-sans font-bold text-5xl uppercase ">
-      {time}
+    {/* Top-left: elapsed ride time when live, clock otherwise */}
+    <div className="fixed top-8 left-8 pointer-events-none text-white font-sans font-bold text-5xl uppercase">
+      {timeDisplay}
     </div>
 
-    {/* Top-right: distance */}
-    <div className="fixed top-8 right-8 pointer-events-none text-white font-sans font-bold text-5xl uppercase ">
-      10km
+    {/* Top-right: km traveled */}
+    <div className="fixed top-8 right-8 pointer-events-none text-white font-sans font-bold text-5xl uppercase">
+      {kmDisplay}
     </div>
 
     {/* Bottom-right: about */}
-    <div className="fixed bottom-8 right-8 pointer-events-none text-white font-sans font-bold text-5xl uppercase ">
+    <a href="/about" className="fixed bottom-8 right-8 text-white font-sans font-bold text-5xl uppercase cursor-pointer">
       about
-    </div>
+    </a>
 
     <div className="fixed bottom-12 left-0 pointer-events-none w-[384px] [container-type:inline-size]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
