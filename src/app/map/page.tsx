@@ -81,6 +81,12 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
+const ABOUT_SLIDES = [
+  { key: 'toni',  title: 'Toni',  text: 'Placeholder — about Toni.' },
+  { key: 'route', title: 'Route', text: 'Placeholder — about the route.' },
+  { key: 'bike',  title: 'Bike',  text: 'Placeholder — about the bike.' },
+] as const
+
 function parseGpx(text: string): [number, number][] {
   const doc = new DOMParser().parseFromString(text, 'application/xml')
   const pts: [number, number][] = []
@@ -115,7 +121,6 @@ export default function MapPage() {
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
   const lastPos = useRef({ x: 0, y: 0 })
-  const minZoomRef = useRef(0.1)
   const tps = useMemo(() => buildTPS(CONTROL_POINTS), [])
 
   const { location, isLive, sessionStart } = useLocation()
@@ -162,7 +167,6 @@ export default function MapPage() {
     const cW = containerRef.current.clientWidth
     const cH = containerRef.current.clientHeight
     const zoom = Math.max(1, cH * IMG_W / (cW * IMG_H))
-    minZoomRef.current = cH * IMG_W / (cW * IMG_H)
     const panX = (cW - cW * zoom) / 2
     const panY = (cH - cW * (IMG_H / IMG_W) * zoom) / 2
     setTransform({ zoom, panX, panY })
@@ -320,74 +324,44 @@ export default function MapPage() {
       </div>
     </div>
 
-    {/* Top-left: elapsed ride time when live, clock otherwise */}
     <div className="fixed top-8 left-8 pointer-events-none text-white font-sans font-bold text-5xl uppercase">
       {timeDisplay}
     </div>
 
-    {/* Top-right: km traveled */}
     <div className="fixed top-8 right-8 pointer-events-none text-white font-sans font-bold text-5xl uppercase">
       {kmDisplay}
     </div>
 
-    {/* Bottom-right: about */}
     <button onClick={() => setAboutOpen(true)} className="fixed bottom-8 right-8 text-white font-sans font-bold text-5xl uppercase cursor-pointer">
       about
     </button>
 
-    {/* About dialog */}
-    {aboutOpen && (() => {
-      const slides = ['toni', 'route', 'bike'] as const
-      const prev = () => setAboutSlide(s => (s + slides.length - 1) % slides.length)
-      const next = () => setAboutSlide(s => (s + 1) % slides.length)
-      return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setAboutOpen(false)} />
-          <div className="relative bg-white text-black max-w-md w-full mx-4">
-
-            {/* Carousel nav */}
-            <div className="flex items-center justify-between border-b border-black/10">
-              <button onClick={prev} className="px-5 py-4 text-2xl font-bold hover:bg-black/5 transition-colors">‹</button>
-              <div className="flex gap-6">
-                {slides.map((s, i) => (
-                  <button
-                    key={s}
-                    onClick={() => setAboutSlide(i)}
-                    className={`py-4 font-sans font-bold text-sm uppercase tracking-widest transition-colors ${i === aboutSlide ? 'text-black border-b-2 border-black' : 'text-black/30'}`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-              <button onClick={next} className="px-5 py-4 text-2xl font-bold hover:bg-black/5 transition-colors">›</button>
+    {aboutOpen && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/60" onClick={() => setAboutOpen(false)} />
+        <div className="relative bg-white text-black max-w-md w-full mx-4">
+          <div className="flex items-center justify-between border-b border-black/10">
+            <button onClick={() => setAboutSlide(s => (s + ABOUT_SLIDES.length - 1) % ABOUT_SLIDES.length)} className="px-5 py-4 text-2xl font-bold hover:bg-black/5 transition-colors">‹</button>
+            <div className="flex gap-6">
+              {ABOUT_SLIDES.map((slide, i) => (
+                <button
+                  key={slide.key}
+                  onClick={() => setAboutSlide(i)}
+                  className={`py-4 font-sans font-bold text-sm uppercase tracking-widest transition-colors ${i === aboutSlide ? 'text-black border-b-2 border-black' : 'text-black/30'}`}
+                >
+                  {slide.key}
+                </button>
+              ))}
             </div>
-
-            {/* Slide content */}
-            <div className="p-10 min-h-[30vh]">
-{aboutSlide === 0 && (
-                <>
-                  <h2 className="font-sans font-bold text-3xl uppercase mb-4">Toni</h2>
-                  <p className="font-sans text-lg">Placeholder — about Toni.</p>
-                </>
-              )}
-              {aboutSlide === 1 && (
-                <>
-                  <h2 className="font-sans font-bold text-3xl uppercase mb-4">Route</h2>
-                  <p className="font-sans text-lg">Placeholder — about the route.</p>
-                </>
-              )}
-              {aboutSlide === 2 && (
-                <>
-                  <h2 className="font-sans font-bold text-3xl uppercase mb-4">Bike</h2>
-                  <p className="font-sans text-lg">Placeholder — about the bike.</p>
-                </>
-              )}
-            </div>
-
+            <button onClick={() => setAboutSlide(s => (s + 1) % ABOUT_SLIDES.length)} className="px-5 py-4 text-2xl font-bold hover:bg-black/5 transition-colors">›</button>
+          </div>
+          <div className="p-10 min-h-[30vh]">
+            <h2 className="font-sans font-bold text-3xl uppercase mb-4">{ABOUT_SLIDES[aboutSlide].title}</h2>
+            <p className="font-sans text-lg">{ABOUT_SLIDES[aboutSlide].text}</p>
           </div>
         </div>
-      )
-    })()}
+      </div>
+    )}
 
     <div className="fixed bottom-12 left-0 pointer-events-none w-[384px] [container-type:inline-size]">
       {/* eslint-disable-next-line @next/next/no-img-element */}

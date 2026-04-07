@@ -12,14 +12,12 @@ export interface RiderLocation {
 export function useLocation() {
   const [location, setLocation] = useState<RiderLocation | null>(null)
   const [isLive, setIsLive] = useState(false)
-  const [loading, setLoading] = useState(true)
   const [sessionStart, setSessionStart] = useState<number | null>(null)
   const wasLive = useRef(false)
 
   useEffect(() => {
     const unsubLocation = onValue(ref(db, 'location'), (snap) => {
       setLocation(snap.val())
-      setLoading(false)
     })
     const unsubSession = onValue(ref(db, 'session'), (snap) => {
       const active: boolean = snap.val()?.active ?? false
@@ -35,5 +33,5 @@ export function useLocation() {
     return () => { unsubLocation(); unsubSession() }
   }, [])
 
-  return { location, isLive, loading, sessionStart }
+  return { location, isLive, sessionStart }
 }
