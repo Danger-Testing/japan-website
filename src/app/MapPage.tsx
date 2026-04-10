@@ -223,6 +223,9 @@ function useCountdownToEST4am() {
 }
 
 
+const GLOBAL_START_MS = 1775862765599
+const AVG_SPEED_MPH = 15.5
+
 export default function MapPage() {
   const [routePts, setRoutePts] = useState<{ x: number; y: number }[]>([])
   const [routeGeo, setRouteGeo] = useState<[number, number][]>([])
@@ -241,6 +244,7 @@ export default function MapPage() {
   const isTouchOnRoute = useRef(false)
   const touchDidMove = useRef(false)
   const [elapsed, setElapsed] = useState('')
+  const [milesDisplay, setMilesDisplay] = useState('--')
   const [welcomeOpen, setWelcomeOpen] = useState(true)
   const [aboutOpen, setAboutOpen] = useState(false)
   const [aboutSlide, setAboutSlide] = useState(0)
@@ -331,9 +335,8 @@ export default function MapPage() {
   }, [location, isLive, routeGeo, routeCumDist])
 
   // Elapsed ride time ticker — always running; uses sessionStart when live, hardcoded global start otherwise
-  const GLOBAL_START = 1775862765599
   useEffect(() => {
-    const startTime = (isLive && sessionStart !== null) ? sessionStart : GLOBAL_START
+    const startTime = (isLive && sessionStart !== null) ? sessionStart : GLOBAL_START_MS
     const update = () => {
       const totalSecs = Math.floor((Date.now() - startTime) / 1000)
       const h = Math.floor(totalSecs / 3600)
@@ -349,6 +352,22 @@ export default function MapPage() {
     const id = setInterval(update, 1000)
     return () => clearInterval(id)
   }, [isLive, sessionStart])
+
+  // Animated miles remaining — ticks every second based on elapsed time × avg speed
+  useEffect(() => {
+    const totalKmVal = routeCumDist[routeCumDist.length - 1] ?? null
+    if (totalKmVal === null) return
+    const totalMi = totalKmVal * 0.621371
+    const update = () => {
+      const elapsedH = (Date.now() - GLOBAL_START_MS) / 3_600_000
+      const covered = elapsedH * AVG_SPEED_MPH
+      const remaining = Math.max(0, totalMi - covered)
+      setMilesDisplay(`${remaining.toFixed(0)}mi`)
+    }
+    update()
+    const id = setInterval(update, 1000)
+    return () => clearInterval(id)
+  }, [routeCumDist])
 
   useEffect(() => {
     fetch('/japan.gpx')
@@ -547,19 +566,6 @@ export default function MapPage() {
   const last  = routePts[routePts.length - 1]
 
   const totalKm = routeCumDist[routeCumDist.length - 1] ?? null
-  const remainingKm = isLive && riderKm !== null && totalKm !== null ? totalKm - riderKm : null
-  const toMi = (km: number) => (km * 0.621371).toFixed(0)
-  const TARGET_KMH = 25
-  const etaHours = (km: number) => {
-    const h = Math.floor(km / TARGET_KMH)
-    const m = Math.round((km / TARGET_KMH - h) * 60)
-    return m > 0 ? `${h}h ${m}m` : `${h}h`
-  }
-  const kmDisplay = remainingKm !== null
-    ? `${toMi(remainingKm)}mi · ${etaHours(remainingKm)}`
-    : totalKm !== null
-    ? `${toMi(totalKm)}mi · ${etaHours(totalKm)}`
-    : '--'
   const timeDisplay = isLive && elapsed ? elapsed : clockTime
 
   return (
@@ -670,7 +676,7 @@ export default function MapPage() {
     <div className="fixed top-3 right-3 sm:top-8 sm:right-8 z-30 flex flex-col items-end gap-2">
       <div className="pointer-events-none text-[#02F7F7] font-bold text-right uppercase flex flex-col items-end opacity-50" style={{ fontFamily: 'Times New Roman, serif' }}>
         <span className="text-2xl sm:text-5xl lg:text-6xl leading-none">tokyo</span>
-        <span className="text-xl sm:text-4xl lg:text-5xl leading-none -mt-1">{kmDisplay} to osaka</span>
+        <span className="text-xl sm:text-4xl lg:text-5xl leading-none -mt-1">{milesDisplay} to osaka</span>
       </div>
     </div>
 
