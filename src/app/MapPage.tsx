@@ -245,7 +245,6 @@ export default function MapPage() {
   const [aboutOpen, setAboutOpen] = useState(false)
   const [aboutSlide, setAboutSlide] = useState(0)
   const clockTime = useCurrentTime()
-  const countdown = useCountdownToEST4am()
   const heartRate = useLiveHeartRate()
   const tps = useMemo(() => buildTPS(CONTROL_POINTS), [])
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 })
@@ -711,13 +710,6 @@ export default function MapPage() {
       </div>
     )}
 
-    {!welcomeOpen && !isLive && countdown && (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none">
-        <span style={{ fontFamily: 'system-ui, sans-serif', fontSize: 'clamp(3rem, 12vw, 10rem)', fontWeight: 700, color: 'red', letterSpacing: '-0.02em', lineHeight: 1 }}>
-          {countdown}
-        </span>
-      </div>
-    )}
 
     {aboutOpen && (
       <div className="fixed inset-0 z-50 flex items-center justify-center">
