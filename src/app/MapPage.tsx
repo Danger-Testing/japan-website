@@ -167,7 +167,7 @@ function parseGpx(text: string): [number, number][] {
 function useCurrentTime() {
   const [time, setTime] = useState('')
   useEffect(() => {
-    const fmt = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const fmt = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' })
     setTime(fmt())
     const id = setInterval(() => setTime(fmt()), 1000)
     return () => clearInterval(id)
