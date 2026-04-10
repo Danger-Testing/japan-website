@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { useLocation } from '@/hooks/useLocation'
 
-const RouteMapLeaflet = dynamic(() => import('@/components/RouteMapLeaflet'), { ssr: false })
+const RouteMapLeaflet = dynamic(() => import('@/components/RouteMapMapbox'), { ssr: false })
 
 const STORIES = [
   '/ig/story_01_image_20260409_053307.jpg',
@@ -107,6 +107,24 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
+function nearestSegmentPoint(
+  ix: number, iy: number,
+  pts: { x: number; y: number }[]
+): { x: number; y: number; d2: number } {
+  let bestX = pts[0].x, bestY = pts[0].y, bestD2 = Infinity
+  for (let i = 0; i < pts.length - 1; i++) {
+    const ax = pts[i].x, ay = pts[i].y
+    const bx = pts[i + 1].x, by = pts[i + 1].y
+    const dx = bx - ax, dy = by - ay
+    const len2 = dx * dx + dy * dy
+    const t = len2 > 0 ? Math.max(0, Math.min(1, ((ix - ax) * dx + (iy - ay) * dy) / len2)) : 0
+    const cx = ax + t * dx, cy = ay + t * dy
+    const d2 = (ix - cx) ** 2 + (iy - cy) ** 2
+    if (d2 < bestD2) { bestD2 = d2; bestX = cx; bestY = cy }
+  }
+  return { x: bestX, y: bestY, d2: bestD2 }
+}
+
 function findNearestPhoto(
   clientX: number, clientY: number,
   pan: { x: number; y: number },
@@ -118,17 +136,7 @@ function findNearestPhoto(
   if (svgMeta.scale === 0 || routePts.length < 2 || photoZones.length === 0) return null
   const ix = ((clientX - pan.x) / zoom - svgMeta.tx) / svgMeta.scale
   const iy = ((clientY - pan.y) / zoom - svgMeta.ty) / svgMeta.scale
-  let bestX = routePts[0].x, bestY = routePts[0].y, bestD2 = Infinity
-  for (let i = 0; i < routePts.length - 1; i++) {
-    const ax = routePts[i].x, ay = routePts[i].y
-    const bx = routePts[i + 1].x, by = routePts[i + 1].y
-    const dx = bx - ax, dy = by - ay
-    const len2 = dx * dx + dy * dy
-    const t = len2 > 0 ? Math.max(0, Math.min(1, ((ix - ax) * dx + (iy - ay) * dy) / len2)) : 0
-    const cx = ax + t * dx, cy = ay + t * dy
-    const d2 = (ix - cx) ** 2 + (iy - cy) ** 2
-    if (d2 < bestD2) { bestD2 = d2; bestX = cx; bestY = cy }
-  }
+  const { x: bestX, y: bestY, d2: bestD2 } = nearestSegmentPoint(ix, iy, routePts)
   if (bestD2 >= 120 * 120) return null
   let nearest: (typeof photoZones)[0] | null = null, nearestD2 = Infinity
   for (const z of photoZones) {
@@ -168,17 +176,18 @@ function useCurrentTime() {
 }
 
 function useLiveHeartRate() {
-  const [bpm, setBpm] = useState(45)
+  const [bpm, setBpm] = useState(72)
   useEffect(() => {
     let t: ReturnType<typeof setTimeout>
     const tick = () => {
       setBpm(prev => {
-        const delta = (Math.random() < 0.5 ? -1 : 1) * (Math.random() < 0.25 ? 2 : 1)
-        return Math.max(40, Math.min(50, prev + delta))
+        // 80% chance: stay the same; 20% chance: drift by 1
+        const delta = Math.random() < 0.2 ? (Math.random() < 0.5 ? -1 : 1) : 0
+        return Math.max(65, Math.min(80, prev + delta))
       })
-      t = setTimeout(tick, 1200 + Math.random() * 1600)
+      t = setTimeout(tick, 3000 + Math.random() * 4000)
     }
-    t = setTimeout(tick, 1200 + Math.random() * 1600)
+    t = setTimeout(tick, 3000 + Math.random() * 4000)
     return () => clearTimeout(t)
   }, [])
   return bpm
@@ -380,23 +389,10 @@ export default function MapPage() {
   // Convert cursor screen position → nearest point on route (image coords)
   const routeCursorDot = useMemo(() => {
     if (!cursorPos || routePts.length < 2 || svgScale === 0) return null
-    // screen → image coords
     const ix = ((cursorPos.x - pan.x) / zoom - svgTx) / svgScale
     const iy = ((cursorPos.y - pan.y) / zoom - svgTy) / svgScale
-    // find nearest segment
-    let bestX = routePts[0].x, bestY = routePts[0].y, bestD2 = Infinity
-    for (let i = 0; i < routePts.length - 1; i++) {
-      const ax = routePts[i].x, ay = routePts[i].y
-      const bx = routePts[i + 1].x, by = routePts[i + 1].y
-      const dx = bx - ax, dy = by - ay
-      const len2 = dx * dx + dy * dy
-      const t = len2 > 0 ? Math.max(0, Math.min(1, ((ix - ax) * dx + (iy - ay) * dy) / len2)) : 0
-      const cx = ax + t * dx, cy = ay + t * dy
-      const d2 = (ix - cx) ** 2 + (iy - cy) ** 2
-      if (d2 < bestD2) { bestD2 = d2; bestX = cx; bestY = cy }
-    }
-    // only show within ~80px of the route in image space
-    return bestD2 < 80 * 80 ? { x: bestX, y: bestY } : null
+    const { x, y, d2 } = nearestSegmentPoint(ix, iy, routePts)
+    return d2 < 80 * 80 ? { x, y } : null
   }, [cursorPos, routePts, pan, zoom, svgTx, svgTy, svgScale])
 
   const clamp = (x: number, y: number, z: number, w: number, h: number) => ({
@@ -716,7 +712,7 @@ export default function MapPage() {
       </div>
     )}
 
-    {!welcomeOpen && countdown && (
+    {!welcomeOpen && !isLive && countdown && (
       <div className="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none">
         <span style={{ fontFamily: 'system-ui, sans-serif', fontSize: 'clamp(3rem, 12vw, 10rem)', fontWeight: 700, color: 'red', letterSpacing: '-0.02em', lineHeight: 1 }}>
           {countdown}
