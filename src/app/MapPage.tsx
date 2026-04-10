@@ -107,6 +107,37 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
+function findNearestPhoto(
+  clientX: number, clientY: number,
+  pan: { x: number; y: number },
+  zoom: number,
+  svgMeta: { scale: number; tx: number; ty: number },
+  routePts: { x: number; y: number }[],
+  photoZones: { x: number; y: number; src: string; caption: string }[]
+): { src: string; caption: string } | null {
+  if (svgMeta.scale === 0 || routePts.length < 2 || photoZones.length === 0) return null
+  const ix = ((clientX - pan.x) / zoom - svgMeta.tx) / svgMeta.scale
+  const iy = ((clientY - pan.y) / zoom - svgMeta.ty) / svgMeta.scale
+  let bestX = routePts[0].x, bestY = routePts[0].y, bestD2 = Infinity
+  for (let i = 0; i < routePts.length - 1; i++) {
+    const ax = routePts[i].x, ay = routePts[i].y
+    const bx = routePts[i + 1].x, by = routePts[i + 1].y
+    const dx = bx - ax, dy = by - ay
+    const len2 = dx * dx + dy * dy
+    const t = len2 > 0 ? Math.max(0, Math.min(1, ((ix - ax) * dx + (iy - ay) * dy) / len2)) : 0
+    const cx = ax + t * dx, cy = ay + t * dy
+    const d2 = (ix - cx) ** 2 + (iy - cy) ** 2
+    if (d2 < bestD2) { bestD2 = d2; bestX = cx; bestY = cy }
+  }
+  if (bestD2 >= 120 * 120) return null
+  let nearest: (typeof photoZones)[0] | null = null, nearestD2 = Infinity
+  for (const z of photoZones) {
+    const d2 = (bestX - z.x) ** 2 + (bestY - z.y) ** 2
+    if (d2 < nearestD2) { nearestD2 = d2; nearest = z }
+  }
+  return nearest ? { src: nearest.src, caption: nearest.caption } : null
+}
+
 
 const ABOUT_SLIDES = [
   { key: 'toni',  title: 'Toni',  text: "Toni, AKA El Toro, is one of the fastest street cyclists in the world. From the Bronx, NYC, he has been riding fixed-gear bikes for 15 years, building a reputation as an elite alleycat racer, known for his impeccable style and bespoke bicycles. He has won multiple alleycat races, including Monster Track NYC in 2023. Over time, he started falling in love with the idea of ultra-distance riding, drawn especially to doing it on a fixed-gear bike for the added challenge.\n\nDuring his last time in Japan, he heard about this race and decided to go for it with three days of preparation. He finished in 28h 9mins, with the last 80 miles ridden in freezing rain at 34°F. After crossing the line, Toni heard about a local legend: a rider named Yuki had done the same route, brakeless on a fixed gear, in 22 hours.\n\nEl Toro has wanted to reattempt it ever since. This time, he believes he is capable of going under 24 hours, he just needs the weather to align." },
@@ -194,6 +225,12 @@ export default function MapPage() {
   const lastPos = useRef({ x: 0, y: 0 })
   const lastPinchDist = useRef<number | null>(null)
   const zoomRef = useRef(2.5)
+  const panRef = useRef({ x: 0, y: 0 })
+  const routePtsRef = useRef<{ x: number; y: number }[]>([])
+  const photoZonesRef = useRef<{ x: number; y: number; src: string; caption: string }[]>([])
+  const svgMetaRef = useRef({ scale: 0, tx: 0, ty: 0 })
+  const isTouchOnRoute = useRef(false)
+  const touchDidMove = useRef(false)
   const [elapsed, setElapsed] = useState('')
   const [welcomeOpen, setWelcomeOpen] = useState(true)
   const [aboutOpen, setAboutOpen] = useState(false)
@@ -334,6 +371,12 @@ export default function MapPage() {
   const svgTx = (containerSize.w - IMG_W * svgScale) / 2
   const svgTy = (containerSize.h - IMG_H * svgScale) / 2
 
+  // Keep refs current so static touch handlers can read latest values
+  useEffect(() => { panRef.current = pan }, [pan])
+  useEffect(() => { routePtsRef.current = routePts }, [routePts])
+  useEffect(() => { photoZonesRef.current = photoZones }, [photoZones])
+  useEffect(() => { svgMetaRef.current = { scale: svgScale, tx: svgTx, ty: svgTy } }, [svgScale, svgTx, svgTy])
+
   // Convert cursor screen position → nearest point on route (image coords)
   const routeCursorDot = useMemo(() => {
     if (!cursorPos || routePts.length < 2 || svgScale === 0) return null
@@ -401,10 +444,25 @@ export default function MapPage() {
 
     const onTouchStart = (e: TouchEvent) => {
       if (e.touches.length === 1) {
-        isDragging.current = true
-        lastPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
-        lastPinchDist.current = null
+        const photo = findNearestPhoto(
+          e.touches[0].clientX, e.touches[0].clientY,
+          panRef.current, zoomRef.current, svgMetaRef.current,
+          routePtsRef.current, photoZonesRef.current
+        )
+        if (photo) {
+          isTouchOnRoute.current = true
+          touchDidMove.current = false
+          isDragging.current = false
+          setPhotoPopup(photo)
+        } else {
+          isTouchOnRoute.current = false
+          isDragging.current = true
+          setPhotoPopup(null)
+          lastPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+          lastPinchDist.current = null
+        }
       } else if (e.touches.length === 2) {
+        isTouchOnRoute.current = false
         isDragging.current = false
         const dx = e.touches[0].clientX - e.touches[1].clientX
         const dy = e.touches[0].clientY - e.touches[1].clientY
@@ -415,7 +473,15 @@ export default function MapPage() {
     const onTouchMove = (e: TouchEvent) => {
       e.preventDefault()
       const { clientWidth: w, clientHeight: h } = el
-      if (e.touches.length === 1 && isDragging.current) {
+      if (e.touches.length === 1 && isTouchOnRoute.current) {
+        touchDidMove.current = true
+        const photo = findNearestPhoto(
+          e.touches[0].clientX, e.touches[0].clientY,
+          panRef.current, zoomRef.current, svgMetaRef.current,
+          routePtsRef.current, photoZonesRef.current
+        )
+        if (photo) setPhotoPopup(photo)
+      } else if (e.touches.length === 1 && isDragging.current) {
         const dx = e.touches[0].clientX - lastPos.current.x
         const dy = e.touches[0].clientY - lastPos.current.y
         lastPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
@@ -438,7 +504,12 @@ export default function MapPage() {
       }
     }
 
-    const onTouchEnd = () => { isDragging.current = false; lastPinchDist.current = null }
+    const onTouchEnd = () => {
+      if (isTouchOnRoute.current && touchDidMove.current) setPhotoPopup(null)
+      isTouchOnRoute.current = false
+      isDragging.current = false
+      lastPinchDist.current = null
+    }
 
     el.addEventListener('wheel', onWheel, { passive: false })
     el.addEventListener('touchstart', onTouchStart, { passive: false })
@@ -600,9 +671,12 @@ export default function MapPage() {
         <span className="text-2xl sm:text-5xl lg:text-6xl leading-none">tokyo</span>
         <span className="text-xl sm:text-4xl lg:text-5xl leading-none -mt-1">{kmDisplay} to osaka</span>
       </div>
-      {/* Story viewer — below osaka text, desktop only */}
+    </div>
+
+    {/* Story viewer — desktop only, vertically centered on right */}
+    <div className="hidden sm:flex fixed right-8 top-1/2 -translate-y-1/2 z-30 flex-col items-end gap-2">
       <div
-        className="hidden sm:block relative w-[90px] sm:w-[150px] lg:w-[200px] cursor-pointer overflow-hidden"
+        className="relative w-[150px] lg:w-[200px] cursor-pointer overflow-hidden"
         style={{ aspectRatio: '9/16' }}
         onClick={() => setStoryIdx(i => (i + 1) % STORIES.length)}
       >
@@ -624,14 +698,14 @@ export default function MapPage() {
           ))}
         </div>
       </div>
-      <p className="hidden sm:block text-[#02F7F7] font-bold uppercase opacity-50 text-xs sm:text-sm lg:text-base tracking-wide pointer-events-none" style={{ fontFamily: 'Times New Roman, serif' }}>
+      <p className="text-[#02F7F7] font-bold uppercase opacity-50 text-sm lg:text-base tracking-wide pointer-events-none" style={{ fontFamily: 'Times New Roman, serif' }}>
         live from ig
       </p>
     </div>
 
     <button onClick={() => { playSound(); setAboutOpen(true) }} className="fixed bottom-0 right-0 z-30 cursor-pointer">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/menu.png" alt="Menu" className="w-28 sm:w-60 lg:w-80" draggable={false} />
+      <img src="/menu.png" alt="Menu" className="w-36 sm:w-60 lg:w-80" draggable={false} />
     </button>
 
     {welcomeOpen && (
@@ -696,7 +770,7 @@ export default function MapPage() {
       </div>
     )}
 
-    <div className="fixed bottom-0 left-0 z-30 pointer-events-none w-[160px] sm:w-[360px] lg:w-[480px] [container-type:inline-size]">
+    <div className="fixed bottom-0 left-0 z-30 pointer-events-none w-[200px] sm:w-[360px] lg:w-[480px] [container-type:inline-size]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/screen.png" alt="" className="w-full" />
       <div className="absolute flex items-center justify-center text-[#02F7F7] font-bold tracking-wider uppercase overflow-hidden opacity-50" style={{ fontFamily: 'Times New Roman, serif', fontSize: '13cqw',
