@@ -131,6 +131,7 @@ export default function MapPage() {
   const [aboutSlide, setAboutSlide] = useState(0)
   const clockTime = useCurrentTime()
   const tps = useMemo(() => buildTPS(CONTROL_POINTS), [])
+  const [containerSize, setContainerSize] = useState({ w: 0, h: 0 })
 
   const [communityPhotos, setCommunityPhotos] = useState<Array<{
     id: number; lat: number; lng: number; locality: string; administrative_area: string; caption: string | null
@@ -219,6 +220,19 @@ export default function MapPage() {
         setRouteCumDist(cumDist)
       })
   }, [tps])
+
+  // Measure container once for the standalone route SVG layer
+  useEffect(() => {
+    if (!containerRef.current) return
+    setContainerSize({ w: containerRef.current.clientWidth, h: containerRef.current.clientHeight })
+  }, [])
+
+  // Replicate SVG viewBox xMidYMid slice: maps image coords → container pixels
+  const svgScale = containerSize.w && containerSize.h
+    ? Math.max(containerSize.w / IMG_W, containerSize.h / IMG_H)
+    : 0
+  const svgTx = (containerSize.w - IMG_W * svgScale) / 2
+  const svgTy = (containerSize.h - IMG_H * svgScale) / 2
 
   const clamp = (x: number, y: number, z: number, w: number, h: number) => ({
     x: Math.max(-(w * (z - 1)), Math.min(0, x)),
@@ -356,53 +370,58 @@ export default function MapPage() {
         draggable={false}
       />
 
-      {(routePts.length > 1 || bikerPos) && (
-        <svg
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
-          viewBox={`0 0 ${IMG_W} ${IMG_H}`}
-          preserveAspectRatio="xMidYMid slice"
-          className="pointer-events-none"
-        >
-          {routePts.length > 1 && (
-            <>
-              <polyline
-                points={routePts.map(p => `${p.x},${p.y}`).join(' ')}
-                fill="none" stroke="white" strokeWidth={8}
-                strokeLinejoin="round" strokeLinecap="round"
-                strokeDasharray="40 30"
-              />
-              <circle cx={first.x} cy={first.y} r={18} fill="white" />
-              <circle cx={last.x}  cy={last.y}  r={18} fill="white" />
-            </>
-          )}
-          {bikerPos && (
-            <image href="/biking.png" x={bikerPos.x - 80} y={bikerPos.y - 160} width={160} height={159} />
-          )}
-          {routePts.length > 1 && (
-            <>
-              <image href="/tokyo.png" x={first.x + 30} y={first.y - 60} width={280} height={64} />
-              <image href="/osaka.png" x={last.x - 282} y={last.y - 33} width={252} height={66} />
-            </>
-          )}
-          {/* Photo hit areas — invisible, just capture hover/tap to trigger popup */}
-          {photoPositions.map((p, i) => (
-            <circle
-              key={i}
-              cx={p.x} cy={p.y} r={60}
-              fill="transparent"
-              style={{ pointerEvents: 'auto', cursor: 'pointer' }}
-              onMouseEnter={() => setPhotoPopup({ src: p.src, caption: p.caption })}
-              onMouseLeave={() => setPhotoPopup(null)}
-              onClick={e => {
-                e.stopPropagation()
-                setPhotoPopup(prev => prev?.src === p.src && prev?.caption === p.caption ? null : { src: p.src, caption: p.caption })
-              }}
-            />
-          ))}
-        </svg>
-      )}
       </div>
     </div>
+
+    {/* Route SVG — fixed layer above photo popup (z-20 > z-10).
+        Replicates viewBox xMidYMid slice via nested <g> transforms so
+        image-space coords stay correct without being inside the pan/zoom div. */}
+    {(routePts.length > 1 || bikerPos) && svgScale > 0 && (
+      <svg className="fixed inset-0 z-20 pointer-events-none" style={{ width: '100%', height: '100%' }}>
+        {/* outer g = pan/zoom (mirrors the CSS transform on the map div) */}
+        <g transform={`translate(${pan.x},${pan.y}) scale(${zoom})`}>
+          {/* inner g = viewBox xMidYMid slice mapping */}
+          <g transform={`translate(${svgTx},${svgTy}) scale(${svgScale})`}>
+            {/* Photo hit areas rendered first so route paints above */}
+            {photoPositions.map((p, i) => (
+              <circle
+                key={i}
+                cx={p.x} cy={p.y} r={60}
+                fill="transparent"
+                style={{ pointerEvents: 'auto', cursor: 'pointer' }}
+                onMouseEnter={() => setPhotoPopup({ src: p.src, caption: p.caption })}
+                onMouseLeave={() => setPhotoPopup(null)}
+                onClick={e => {
+                  e.stopPropagation()
+                  setPhotoPopup(prev => prev?.src === p.src && prev?.caption === p.caption ? null : { src: p.src, caption: p.caption })
+                }}
+              />
+            ))}
+            {routePts.length > 1 && (
+              <>
+                <polyline
+                  points={routePts.map(p => `${p.x},${p.y}`).join(' ')}
+                  fill="none" stroke="white" strokeWidth={8}
+                  strokeLinejoin="round" strokeLinecap="round"
+                  strokeDasharray="40 30"
+                />
+                <circle cx={first.x} cy={first.y} r={18} fill="white" />
+                <circle cx={last.x}  cy={last.y}  r={18} fill="white" />
+              </>
+            )}
+            {bikerPos && (
+              <image href="/biking.png" x={bikerPos.x - 80} y={bikerPos.y - 160} width={160} height={159} />
+            )}
+            {routePts.length > 1 && (
+              <>
+                <image href="/tokyo.png" x={first.x + 30} y={first.y - 60} width={280} height={64} />
+                <image href="/osaka.png" x={last.x - 282} y={last.y - 33} width={252} height={66} />
+              </>
+            )}
+          </g>
+        </g>
+      </svg>
+    )}
 
     <div className="fixed top-4 left-4 sm:top-8 sm:left-8 pointer-events-none text-[#02F7F7] font-bold text-4xl sm:text-5xl lg:text-6xl uppercase opacity-50" style={{ fontFamily: 'Times New Roman, serif' }}>
       {timeDisplay}
@@ -501,12 +520,12 @@ export default function MapPage() {
       </div>
     </div>
 
-    {/* Photo popup — large centered overlay, 50vh tall */}
+    {/* Photo popup — z-10 so route SVG (z-20) renders above it */}
     {photoPopup && (
-      <div className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none">
+      <div className="fixed inset-0 z-10 flex items-center justify-center pointer-events-none">
         <div className="bg-black/80 rounded overflow-hidden shadow-2xl border border-white/10 flex flex-col" style={{ height: '50vh', aspectRatio: '4/3' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photoPopup.src} alt="" className="flex-1 w-full object-cover min-h-0" draggable={false} />
+          <img src={photoPopup.src} alt="" className="flex-1 w-full object-cover min-h-0 opacity-50" draggable={false} />
           {photoPopup.caption && (
             <p className="flex-shrink-0 text-white text-sm px-4 py-2 opacity-60 uppercase tracking-wide" style={{ fontFamily: 'Times New Roman, serif' }}>
               {photoPopup.caption}
