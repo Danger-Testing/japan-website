@@ -332,11 +332,12 @@ export default function MapPage() {
     return routeCumDist[minIdx] ?? null
   }, [location, isLive, routeGeo, routeCumDist])
 
-  // Elapsed ride time ticker
+  // Elapsed ride time ticker — always running; uses sessionStart when live, hardcoded global start otherwise
+  const GLOBAL_START = 1775862765599
   useEffect(() => {
-    if (!isLive || sessionStart === null) { setElapsed(''); return }
+    const startTime = (isLive && sessionStart !== null) ? sessionStart : GLOBAL_START
     const update = () => {
-      const totalSecs = Math.floor((Date.now() - sessionStart) / 1000)
+      const totalSecs = Math.floor((Date.now() - startTime) / 1000)
       const h = Math.floor(totalSecs / 3600)
       const m = Math.floor((totalSecs % 3600) / 60)
       const s = totalSecs % 60
@@ -551,7 +552,6 @@ export default function MapPage() {
   const remainingKm = isLive && riderKm !== null && totalKm !== null ? totalKm - riderKm : null
   const toMi = (km: number) => (km * 0.621371).toFixed(1)
   const kmDisplay = remainingKm !== null ? `${toMi(remainingKm)}mi` : totalKm !== null ? `${toMi(totalKm)}mi` : '--'
-  const timeDisplay = isLive && elapsed ? elapsed : clockTime
 
   return (
     <>
@@ -630,7 +630,6 @@ export default function MapPage() {
 
     <div className="fixed top-3 left-3 sm:top-8 sm:left-8 z-30 flex flex-col items-start gap-2">
       <div className="pointer-events-none flex flex-col">
-        <span className="text-[#02F7F7] font-bold text-2xl sm:text-5xl lg:text-6xl uppercase opacity-50" style={{ fontFamily: 'Times New Roman, serif' }}>{timeDisplay}</span>
         <span className="text-[#02F7F7] font-bold text-lg sm:text-3xl lg:text-4xl uppercase opacity-50 flex items-center gap-2" style={{ fontFamily: 'Times New Roman, serif' }}>
           <span style={{ animationDuration: `${(60 / heartRate).toFixed(2)}s`, display: 'inline-block' }} className="animate-pulse">♥</span>
           {heartRate} bpm
