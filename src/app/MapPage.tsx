@@ -212,7 +212,7 @@ export default function MapPage() {
         x: routePts[i].x,
         y: routePts[i].y,
         src: `https://ridewithgps.com/photos/${p.id}/large.jpg`,
-        caption: p.location || [p.locality, p.administrative_area].filter(Boolean).join(', '),
+        caption: [p.locality, p.administrative_area].filter(Boolean).join(', '),
       })
     }
     return zones
