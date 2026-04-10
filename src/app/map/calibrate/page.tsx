@@ -11,8 +11,8 @@ const CITIES = [
   { name: 'Fukuoka',   lat: 33.5902, lon: 130.4017, hint: 'Far southwest — Kyushu island' },
 ]
 
-const IMG_W = 2709
-const IMG_H = 4029
+const IMG_W = 3840
+const IMG_H = 2160
 
 interface ControlPoint {
   name: string; lat: number; lon: number; x: number; y: number

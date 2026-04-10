@@ -1,19 +1,22 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useLocation } from '@/hooks/useLocation'
 
+const RouteMapLeaflet = dynamic(() => import('@/components/RouteMapLeaflet'), { ssr: false })
+
 const CONTROL_POINTS = [
-  { lat: 43.0618, lon: 141.3545, x: 1666, y:  645 },
-  { lat: 38.2688, lon: 140.8721, x: 1953, y: 1688 },
-  { lat: 35.6762, lon: 139.6503, x: 1774, y: 2485 },
-  { lat: 34.6937, lon: 135.5023, x: 1002, y: 2983 },
-  { lat: 34.3853, lon: 132.4553, x:  617, y: 3035 },
-  { lat: 33.5902, lon: 130.4017, x:  151, y: 3319 },
+  { lat: 43.0618, lon: 141.3545, x: 2128, y:  285 },
+  { lat: 38.2688, lon: 140.8721, x: 2294, y:  898 },
+  { lat: 35.6762, lon: 139.6503, x: 2188, y: 1312 },
+  { lat: 34.6937, lon: 135.5023, x: 1771, y: 1577 },
+  { lat: 34.3853, lon: 132.4553, x: 1571, y: 1620 },
+  { lat: 33.5902, lon: 130.4017, x: 1298, y: 1782 },
 ]
 
-const IMG_W = 2709
-const IMG_H = 4029
+const IMG_W = 3840
+const IMG_H = 2160
 
 function tpsKernel(r2: number) {
   return r2 < 1e-10 ? 0 : r2 * Math.log(r2)
@@ -82,8 +85,8 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
 }
 
 const ABOUT_SLIDES = [
-  { key: 'toni',  title: 'Toni',  text: 'Placeholder — about Toni.' },
-  { key: 'route', title: 'Route', text: 'Placeholder — about the route.' },
+  { key: 'toni',  title: 'Toni',  text: "I'm Toni, I've been riding fixed gear bikes for 15 years, I became an alleycat racer extraordinaire who started falling in love with the idea of doing ultra distance rides, some on fixed gear bikes for the added challenge. I did this Tokyo to Osaka ride in December 2024 after hearing about it while I was in Japan, I prepared for 3 days last minute, and went for the ride on a whim. It took me 28 hours 19 minutes. The last 80 miles of that ride was in freezing 34 degrees F rain, which was where all my elapsed time went. Upon finishing, I hear The Legend in Japan has it that a guy named Yuki did the cannonball on a brakeless fixed gear in 22 hours. Since then I've wanted to reattempt it, I think I am capable of getting an under 22 hours time, I just need the weather to align with me." },
+  { key: 'route', title: 'Route', text: 'The Iconic Tokyo Osaka ride is very rarely attempted in one day, let alone on a fixed gear bike. It goes across Route 1 in Japan. The start or ending is Japan National Highway Milestone in Nihonbashi, Chuo Ward! … and has an elevation of 11k+ feet…. The most challenging part of the ride is climbing Hakone Mountain, all the red lights, and some confusing turns here and there.' },
   { key: 'bike',  title: 'Bike',  text: 'Placeholder — about the bike.' },
 ] as const
 
@@ -109,19 +112,30 @@ function useCurrentTime() {
   return time
 }
 
+
 export default function MapPage() {
   const [routePts, setRoutePts] = useState<{ x: number; y: number }[]>([])
   const [routeGeo, setRouteGeo] = useState<[number, number][]>([])
   const [routeCumDist, setRouteCumDist] = useState<number[]>([])
-  const [transform, setTransform] = useState({ zoom: 1, panX: 0, panY: 0 })
-  const [elapsed, setElapsed] = useState('')
-  const [aboutOpen, setAboutOpen] = useState(false)
-  const [aboutSlide, setAboutSlide] = useState(0)
-  const clockTime = useCurrentTime()
+  const [zoom, setZoom] = useState(2.5)
+  const [pan, setPan] = useState({ x: 0, y: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
   const lastPos = useRef({ x: 0, y: 0 })
+  const lastPinchDist = useRef<number | null>(null)
+  const zoomRef = useRef(2.5)
+  const [elapsed, setElapsed] = useState('')
+  const [welcomeOpen, setWelcomeOpen] = useState(true)
+  const [aboutOpen, setAboutOpen] = useState(false)
+  const [aboutSlide, setAboutSlide] = useState(0)
+  const clockTime = useCurrentTime()
   const tps = useMemo(() => buildTPS(CONTROL_POINTS), [])
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const playSound = () => {
+    if (!audioRef.current) audioRef.current = new Audio('/swoosh.mp3')
+    audioRef.current.currentTime = 0
+    audioRef.current.play()
+  }
 
   const { location, isLive, sessionStart } = useLocation()
 
@@ -130,6 +144,13 @@ export default function MapPage() {
     if (!location || !isLive) return null
     return evalTPS(tps, location.lat, location.lng)
   }, [location, isLive, tps])
+
+  // Biker indicator: live position or Tokyo start
+  const bikerPos = useMemo(() => {
+    if (riderPos) return riderPos
+    if (routePts.length > 0) return routePts[0]
+    return null
+  }, [riderPos, routePts])
 
   // Distance along route to nearest point to rider
   const riderKm = useMemo(() => {
@@ -163,16 +184,6 @@ export default function MapPage() {
   }, [isLive, sessionStart])
 
   useEffect(() => {
-    if (!containerRef.current) return
-    const cW = containerRef.current.clientWidth
-    const cH = containerRef.current.clientHeight
-    const zoom = Math.max(1, cH * IMG_W / (cW * IMG_H))
-    const panX = (cW - cW * zoom) / 2
-    const panY = (cH - cW * (IMG_H / IMG_W) * zoom) / 2
-    setTransform({ zoom, panX, panY })
-  }, [])
-
-  useEffect(() => {
     fetch('/japan.gpx')
       .then(r => r.text())
       .then(text => {
@@ -180,200 +191,278 @@ export default function MapPage() {
         const pts = raw.map(([lat, lon]) => evalTPS(tps, lat, lon))
         setRoutePts(pts)
         setRouteGeo(raw)
-
-        // Precompute cumulative distances in km along the route
         const cumDist: number[] = [0]
         for (let i = 1; i < raw.length; i++) {
           cumDist.push(cumDist[i - 1] + haversineKm(raw[i-1][0], raw[i-1][1], raw[i][0], raw[i][1]))
         }
         setRouteCumDist(cumDist)
-
-        if (pts.length === 0 || !containerRef.current) return
-        const cW = containerRef.current.clientWidth
-        const cH = containerRef.current.clientHeight
-        const zoom = Math.max(1, cH * IMG_W / (cW * IMG_H))
-
-        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity
-        for (const p of pts) {
-          if (p.x < minX) minX = p.x
-          if (p.x > maxX) maxX = p.x
-          if (p.y < minY) minY = p.y
-          if (p.y > maxY) maxY = p.y
-        }
-        const cx = (minX + maxX) / 2
-        const cy = (minY + maxY) / 2
-        const scale = cW / IMG_W
-        const rawPanX = cW / 2 - cx * scale * zoom
-        const rawPanY = cH / 2 - cy * scale * zoom
-        const imgW = cW * zoom
-        const imgH = cW * zoom * IMG_H / IMG_W
-        setTransform({
-          zoom,
-          panX: Math.max(cW - imgW, Math.min(0, rawPanX)),
-          panY: Math.max(cH - imgH, Math.min(0, rawPanY)),
-        })
       })
   }, [tps])
 
+  const clamp = (x: number, y: number, z: number, w: number, h: number) => ({
+    x: Math.max(-(w * (z - 1)), Math.min(0, x)),
+    y: Math.max(-(h * (z - 1)), Math.min(0, y)),
+  })
+
+  // Start zoomed in on the Tokyo–Osaka route midpoint; lower zoom on portrait/mobile.
+  // On a phone (< 640px wide) the landscape Japan image is heavily cropped by objectFit
+  // to fill the portrait viewport, so zoom 2.5 would show only a tiny slice of the route.
   useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault()
-      const rect = container.getBoundingClientRect()
-      const mx = e.clientX - rect.left
-      const my = e.clientY - rect.top
-      const minZoom = rect.height * IMG_W / (rect.width * IMG_H)
-      setTransform(prev => {
-        const factor = e.deltaY > 0 ? 0.98 : 1.02
-        const newZoom = Math.max(minZoom, Math.min(20, prev.zoom * factor))
-        if (newZoom <= minZoom) {
-          return {
-            zoom: minZoom,
-            panX: (rect.width - rect.width * minZoom) / 2,
-            panY: 0,
-          }
-        }
-        return {
-          zoom: newZoom,
-          panX: mx - (mx - prev.panX) * (newZoom / prev.zoom),
-          panY: my - (my - prev.panY) * (newZoom / prev.zoom),
-        }
-      })
-    }
-    container.addEventListener('wheel', onWheel, { passive: false })
-    return () => container.removeEventListener('wheel', onWheel)
+    if (!containerRef.current) return
+    const { clientWidth: w, clientHeight: h } = containerRef.current
+    const z = w < 640 ? 1.5 : 2.5
+    zoomRef.current = z
+    setZoom(z)
+    // Route midpoint is ~51.5% across, ~66.8% down in the image
+    setPan(clamp(w / 2 - 0.515 * w * z, h / 2 - 0.668 * h * z, z, w, h))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const onMouseDown = (e: React.MouseEvent) => {
-    isDragging.current = true
-    lastPos.current = { x: e.clientX, y: e.clientY }
-  }
+  // All pointer/touch handlers use imperative addEventListener with { passive: false }
+  // so e.preventDefault() is honoured. React's synthetic onTouchMove is passive by
+  // default on modern browsers, which silently ignores preventDefault and lets the
+  // browser's native pan/pinch take over instead of our map controls.
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      const { clientWidth: w, clientHeight: h } = el
+      const rect = el.getBoundingClientRect()
+      const mx = e.clientX - rect.left
+      const my = e.clientY - rect.top
+      const prevZoom = zoomRef.current
+      const next = Math.max(1, Math.min(10, prevZoom * (e.deltaY < 0 ? 1.02 : 0.98)))
+      zoomRef.current = next
+      setZoom(next)
+      setPan(prev => {
+        const ratio = next / prevZoom
+        return clamp(mx - (mx - prev.x) * ratio, my - (my - prev.y) * ratio, next, w, h)
+      })
+    }
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        isDragging.current = true
+        lastPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+        lastPinchDist.current = null
+      } else if (e.touches.length === 2) {
+        isDragging.current = false
+        const dx = e.touches[0].clientX - e.touches[1].clientX
+        const dy = e.touches[0].clientY - e.touches[1].clientY
+        lastPinchDist.current = Math.hypot(dx, dy)
+      }
+    }
+
+    const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault()
+      const { clientWidth: w, clientHeight: h } = el
+      if (e.touches.length === 1 && isDragging.current) {
+        const dx = e.touches[0].clientX - lastPos.current.x
+        const dy = e.touches[0].clientY - lastPos.current.y
+        lastPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+        setPan(p => clamp(p.x + dx, p.y + dy, zoomRef.current, w, h))
+      } else if (e.touches.length === 2 && lastPinchDist.current !== null) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX
+        const dy = e.touches[0].clientY - e.touches[1].clientY
+        const dist = Math.hypot(dx, dy)
+        const mx = (e.touches[0].clientX + e.touches[1].clientX) / 2
+        const my = (e.touches[0].clientY + e.touches[1].clientY) / 2
+        const prevZoom = zoomRef.current
+        const next = Math.max(1, Math.min(10, prevZoom * (dist / lastPinchDist.current)))
+        zoomRef.current = next
+        setZoom(next)
+        setPan(prev => {
+          const ratio = next / prevZoom
+          return clamp(mx - (mx - prev.x) * ratio, my - (my - prev.y) * ratio, next, w, h)
+        })
+        lastPinchDist.current = dist
+      }
+    }
+
+    const onTouchEnd = () => { isDragging.current = false; lastPinchDist.current = null }
+
+    el.addEventListener('wheel', onWheel, { passive: false })
+    el.addEventListener('touchstart', onTouchStart, { passive: false })
+    el.addEventListener('touchmove', onTouchMove, { passive: false })
+    el.addEventListener('touchend', onTouchEnd)
+    return () => {
+      el.removeEventListener('wheel', onWheel)
+      el.removeEventListener('touchstart', onTouchStart)
+      el.removeEventListener('touchmove', onTouchMove)
+      el.removeEventListener('touchend', onTouchEnd)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const onMouseDown = (e: React.MouseEvent) => { isDragging.current = true; lastPos.current = { x: e.clientX, y: e.clientY } }
   const onMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging.current) return
+    if (!isDragging.current || !containerRef.current) return
+    const { clientWidth: w, clientHeight: h } = containerRef.current
     const dx = e.clientX - lastPos.current.x
     const dy = e.clientY - lastPos.current.y
     lastPos.current = { x: e.clientX, y: e.clientY }
-    setTransform(prev => ({ ...prev, panX: prev.panX + dx, panY: prev.panY + dy }))
+    setPan(p => clamp(p.x + dx, p.y + dy, zoomRef.current, w, h))
   }
   const onMouseUp = () => { isDragging.current = false }
 
   const first = routePts[0]
   const last  = routePts[routePts.length - 1]
 
-  const kmDisplay = isLive && riderKm !== null ? `${riderKm.toFixed(1)}km` : '--'
+  const totalKm = routeCumDist[routeCumDist.length - 1] ?? null
+  const remainingKm = isLive && riderKm !== null && totalKm !== null ? totalKm - riderKm : null
+  const toMi = (km: number) => (km * 0.621371).toFixed(1)
+  const kmDisplay = remainingKm !== null ? `${toMi(remainingKm)}mi` : totalKm !== null ? `${toMi(totalKm)}mi` : '--'
   const timeDisplay = isLive && elapsed ? elapsed : clockTime
 
   return (
     <>
     <div
       ref={containerRef}
-      className="w-full overflow-hidden cursor-grab active:cursor-grabbing select-none" style={{ height: '100dvh', backgroundColor: '#027581', backgroundImage: 'url(/japan-bg-tile.png)', backgroundRepeat: 'repeat', backgroundSize: '512px 512px' }}
+      className="fixed inset-0 select-none overflow-hidden cursor-grab active:cursor-grabbing touch-none"
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
       onMouseLeave={onMouseUp}
     >
-      <div
-        style={{
-          transform: `translate(${transform.panX}px, ${transform.panY}px) scale(${transform.zoom})`,
-          transformOrigin: '0 0',
-          willChange: 'transform',
-          width: '100vw',
-          position: 'relative',
-        }}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/japan.png"
-          alt="Map of Japan"
-          style={{ width: '100%', display: 'block' }}
-          draggable={false}
-        />
+      <div style={{ position: 'absolute', inset: 0, transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: '0 0', willChange: 'transform' }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/japan.png"
+        alt="Map of Japan"
+        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        draggable={false}
+      />
 
-        {(routePts.length > 1 || riderPos) && (
-          <svg
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
-            viewBox={`0 0 ${IMG_W} ${IMG_H}`}
-            preserveAspectRatio="none"
-            className="pointer-events-none"
-          >
-            {routePts.length > 1 && (
-              <>
-                <polyline
-                  points={routePts.map(p => `${p.x},${p.y}`).join(' ')}
-                  fill="none" stroke="white" strokeWidth={16}
-                  strokeLinejoin="round" strokeLinecap="round"
-                  strokeDasharray="40 30"
-                />
-                <circle cx={first.x} cy={first.y} r={28} fill="#22c55e" stroke="white" strokeWidth={9} />
-                <circle cx={last.x}  cy={last.y}  r={28} fill="#ef4444" stroke="white" strokeWidth={9} />
-              </>
-            )}
-            {riderPos && (
-              <>
-                <circle cx={riderPos.x} cy={riderPos.y} r={32} fill="none" stroke="#f97316" strokeWidth={8}>
-                  <animate attributeName="r" values="32;70;32" dur="1.8s" repeatCount="indefinite" />
-                  <animate attributeName="opacity" values="0.9;0;0.9" dur="1.8s" repeatCount="indefinite" />
-                </circle>
-                <circle cx={riderPos.x} cy={riderPos.y} r={28} fill="#f97316" stroke="white" strokeWidth={10} />
-              </>
-            )}
-          </svg>
-        )}
+      {(routePts.length > 1 || bikerPos) && (
+        <svg
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+          viewBox={`0 0 ${IMG_W} ${IMG_H}`}
+          preserveAspectRatio="xMidYMid slice"
+          className="pointer-events-none"
+        >
+          {routePts.length > 1 && (
+            <>
+              <polyline
+                points={routePts.map(p => `${p.x},${p.y}`).join(' ')}
+                fill="none" stroke="white" strokeWidth={8}
+                strokeLinejoin="round" strokeLinecap="round"
+                strokeDasharray="40 30"
+              />
+              <circle cx={first.x} cy={first.y} r={18} fill="white" />
+              <circle cx={last.x}  cy={last.y}  r={18} fill="white" />
+            </>
+          )}
+          {bikerPos && (
+            <image href="/biking.png" x={bikerPos.x - 80} y={bikerPos.y - 160} width={160} height={159} />
+          )}
+          {routePts.length > 1 && (
+            <>
+              <image href="/tokyo.png" x={first.x - 175} y={first.y - 120} width={350} height={80} />
+              <image href="/osaka.png" x={last.x  - 158} y={last.y  - 120} width={315} height={83} />
+            </>
+          )}
+        </svg>
+      )}
       </div>
     </div>
 
-    <div className="fixed top-8 left-8 pointer-events-none text-white font-sans font-bold text-5xl uppercase">
+    <div className="fixed top-4 left-4 sm:top-8 sm:left-8 pointer-events-none text-[#02F7F7] font-bold text-4xl sm:text-5xl lg:text-6xl uppercase opacity-50" style={{ fontFamily: 'Times New Roman, serif' }}>
       {timeDisplay}
     </div>
 
-    <div className="fixed top-8 right-8 pointer-events-none text-white font-sans font-bold text-5xl uppercase">
-      {kmDisplay}
+    <div className="fixed top-4 right-4 sm:top-8 sm:right-8 pointer-events-none text-[#02F7F7] font-bold text-right uppercase flex flex-col items-end opacity-50" style={{ fontFamily: 'Times New Roman, serif' }}>
+      <span className="text-4xl sm:text-5xl lg:text-6xl leading-none">osaka</span>
+      <span className="text-3xl sm:text-4xl lg:text-5xl leading-none -mt-1">{kmDisplay} to tokyo</span>
     </div>
 
-    <button onClick={() => setAboutOpen(true)} className="fixed bottom-8 right-8 text-white font-sans font-bold text-5xl uppercase cursor-pointer">
-      about
+    <button onClick={() => { playSound(); setAboutOpen(true) }} className="fixed bottom-0 right-0 cursor-pointer">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/menu.png" alt="Menu" className="w-44 sm:w-60 lg:w-80" draggable={false} />
     </button>
 
-    {aboutOpen && (
+    {welcomeOpen && (
       <div className="fixed inset-0 z-50 flex items-center justify-center">
-        <div className="absolute inset-0 bg-black/60" onClick={() => setAboutOpen(false)} />
-        <div className="relative bg-white text-black max-w-md w-full mx-4">
-          <div className="flex items-center justify-between border-b border-black/10">
-            <button onClick={() => setAboutSlide(s => (s + ABOUT_SLIDES.length - 1) % ABOUT_SLIDES.length)} className="px-5 py-4 text-2xl font-bold hover:bg-black/5 transition-colors">‹</button>
-            <div className="flex gap-6">
-              {ABOUT_SLIDES.map((slide, i) => (
-                <button
-                  key={slide.key}
-                  onClick={() => setAboutSlide(i)}
-                  className={`py-4 font-sans font-bold text-sm uppercase tracking-widest transition-colors ${i === aboutSlide ? 'text-black border-b-2 border-black' : 'text-black/30'}`}
-                >
-                  {slide.key}
-                </button>
-              ))}
-            </div>
-            <button onClick={() => setAboutSlide(s => (s + 1) % ABOUT_SLIDES.length)} className="px-5 py-4 text-2xl font-bold hover:bg-black/5 transition-colors">›</button>
+        <div className="absolute inset-0 bg-black/60" onClick={() => { playSound(); setWelcomeOpen(false) }} />
+        <div className="relative flex" style={{ height: '80dvh' }}>
+          <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/side1.png" alt="" className="h-full block" draggable={false} />
+            <button
+              onClick={() => { playSound(); setWelcomeOpen(false) }}
+              className="absolute bottom-6 left-[45%] -translate-x-1/2 z-10 w-fit px-8 sm:px-12 py-3 bg-black text-white uppercase tracking-widest text-sm hover:bg-black/80 transition-colors cursor-pointer"
+              style={{ fontFamily: 'Times New Roman, serif' }}
+            >
+              Enter
+            </button>
           </div>
-          <div className="p-10 min-h-[30vh]">
-            <h2 className="font-sans font-bold text-3xl uppercase mb-4">{ABOUT_SLIDES[aboutSlide].title}</h2>
-            <p className="font-sans text-lg">{ABOUT_SLIDES[aboutSlide].text}</p>
+          <div className="relative hidden sm:block" style={{ marginLeft: '-3.5%' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/side2.png" alt="" className="h-full block" draggable={false} />
           </div>
         </div>
       </div>
     )}
 
-    <div className="fixed bottom-12 left-0 pointer-events-none w-[384px] [container-type:inline-size]">
+    {aboutOpen && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/60" onClick={() => { playSound(); setAboutOpen(false) }} />
+        <div className="relative text-black flex flex-col" style={{ backgroundImage: 'url(/card.png)', backgroundSize: '100% 100%', aspectRatio: '3/4', maxHeight: '90dvh', height: 'min(70dvh, 70vw * 4 / 3)' }}>
+          {/* decorative arrow overlays — span full card, non-interactive */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/arrow1.png" alt="" className="absolute inset-0 w-full h-full pointer-events-none z-10" draggable={false} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/arrow2.png" alt="" className="absolute inset-0 w-full h-full pointer-events-none z-10" draggable={false} />
+          {/* nav buttons — always above scroll content */}
+          <button onClick={() => { playSound(); setAboutSlide(s => (s + ABOUT_SLIDES.length - 1) % ABOUT_SLIDES.length) }} className="absolute cursor-pointer z-20" style={{ left: '9%', top: '7%', width: '14%', height: '10%' }} />
+          <button onClick={() => { playSound(); setAboutSlide(s => (s + 1) % ABOUT_SLIDES.length) }} className="absolute cursor-pointer z-20" style={{ right: '8%', top: '7%', width: '14%', height: '10%' }} />
+          {/* title — never scrolls. paddingTop 22.7% = 17% of height for a 3/4 card,
+              clearing the nav buttons which end at top 17% of card height. */}
+          <div className="flex-shrink-0 px-4 sm:px-7 lg:px-10" style={{ paddingTop: '11%' }}>
+            <h2 className="font-bold text-3xl sm:text-4xl lg:text-5xl uppercase mb-3 text-center text-white" style={{ fontFamily: 'Times New Roman, serif' }}>{ABOUT_SLIDES[aboutSlide].title}</h2>
+          </div>
+          {/* scrollable body — only text/images scroll */}
+          <div className="flex-1 overflow-y-auto min-h-0 px-4 sm:px-7 lg:px-10">
+            {ABOUT_SLIDES[aboutSlide].key === 'bike' ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/bike.png" alt="Bike" className="w-1/2 sm:w-2/3 mx-auto mt-4 sm:mt-8" draggable={false} />
+                <p className="text-sm mt-4 opacity-50 leading-relaxed" style={{ fontFamily: 'Times New Roman, serif' }}>
+                  49x16 Ratio. Wheels are Weis Wheels to Raketa Hubs. Bars are Enve stem, aero bars, TT Bars clip ons. Chainring and Cranks by Sugino Japan. Selle Italia 3D Saddle. Full MAAP kit.
+                </p>
+              </>
+            ) : ABOUT_SLIDES[aboutSlide].key === 'route' && routeGeo.length > 1 ? (
+              <>
+                <RouteMapLeaflet routeGeo={routeGeo} />
+                <p className="text-sm mt-4 opacity-50 leading-relaxed" style={{ fontFamily: 'Times New Roman, serif' }}>{ABOUT_SLIDES[aboutSlide].text}</p>
+              </>
+            ) : (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/toni.png" alt="Toni" className="w-1/3 sm:w-1/2 mx-auto mt-4 sm:mt-8" draggable={false} />
+                <p className="text-sm mt-4 opacity-50 leading-relaxed" style={{ fontFamily: 'Times New Roman, serif' }}>{ABOUT_SLIDES[aboutSlide].text}</p>
+                <a href="https://www.instagram.com/shogun.toro?igsh=MWs0dWc5NnRyazY3ZA==" target="_blank" rel="noopener noreferrer" className="block mt-4 text-sm opacity-50 hover:opacity-100 transition-opacity" style={{ fontFamily: 'Times New Roman, serif' }}>@shogun.toro ↗</a>
+              </>
+            )}
+          </div>
+          {/* spacer reserves the card's bottom border area — height % is of card height */}
+          <div className="flex-shrink-0" style={{ height: '8%' }} />
+        </div>
+      </div>
+    )}
+
+    <div className="fixed bottom-0 left-0 pointer-events-none w-[260px] sm:w-[360px] lg:w-[480px] [container-type:inline-size]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/screen.png" alt="" className="w-full" />
       {/* Screen zone corners in image px (1014×659): x1=273 y1=525 x2=904 y2=631 */}
-      <div className="absolute flex items-center justify-center text-white font-serif font-bold italic tracking-wider uppercase overflow-hidden" style={{ fontSize: '14cqw',
+      <div className="absolute flex items-center justify-center text-[#02F7F7] font-bold tracking-wider uppercase overflow-hidden opacity-50" style={{ fontFamily: 'Times New Roman, serif', fontSize: '13cqw',
         left:   `${273 / 1014 * 100}%`,
         top:    `${525 / 659 * 100}%`,
         width:  `${(904 - 273) / 1014 * 100}%`,
         height: `${(631 - 525) / 659 * 100}%`,
       }}>
-        osaka
+        {elapsed || '00:00:00'}
       </div>
     </div>
 
