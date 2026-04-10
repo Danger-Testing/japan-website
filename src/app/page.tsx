@@ -84,6 +84,15 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
+// Route photo pins — add your own: { lat, lng, src: '/your-photo.jpg', caption: '...' }
+const PHOTO_WAYPOINTS = [
+  { lat: 35.6847, lng: 139.7746, src: '/toni.png',   caption: 'Nihonbashi, Tokyo — Start' },
+  { lat: 35.2323, lng: 139.0615, src: '/japan.jpeg', caption: 'Hakone Mountain' },
+  { lat: 34.9756, lng: 138.3828, src: '/japan.jpeg', caption: 'Shizuoka' },
+  { lat: 35.1709, lng: 136.8815, src: '/japan.jpeg', caption: 'Nagoya' },
+  { lat: 34.6704, lng: 135.5003, src: '/toni.png',   caption: 'Osaka — Finish' },
+]
+
 const ABOUT_SLIDES = [
   { key: 'toni',  title: 'Toni',  text: "I'm Toni, I've been riding fixed gear bikes for 15 years, I became an alleycat racer extraordinaire who started falling in love with the idea of doing ultra distance rides, some on fixed gear bikes for the added challenge. I did this Tokyo to Osaka ride in December 2024 after hearing about it while I was in Japan, I prepared for 3 days last minute, and went for the ride on a whim. It took me 28 hours 19 minutes. The last 80 miles of that ride was in freezing 34 degrees F rain, which was where all my elapsed time went. Upon finishing, I hear The Legend in Japan has it that a guy named Yuki did the cannonball on a brakeless fixed gear in 22 hours. Since then I've wanted to reattempt it, I think I am capable of getting an under 22 hours time, I just need the weather to align with me." },
   { key: 'route', title: 'Route', text: 'The Iconic Tokyo Osaka ride is very rarely attempted in one day, let alone on a fixed gear bike. It goes across Route 1 in Japan. The start or ending is Japan National Highway Milestone in Nihonbashi, Chuo Ward! … and has an elevation of 11k+ feet…. The most challenging part of the ride is climbing Hakone Mountain, all the red lights, and some confusing turns here and there.' },
@@ -130,6 +139,11 @@ export default function MapPage() {
   const [aboutSlide, setAboutSlide] = useState(0)
   const clockTime = useCurrentTime()
   const tps = useMemo(() => buildTPS(CONTROL_POINTS), [])
+  const photoPositions = useMemo(
+    () => PHOTO_WAYPOINTS.map(wp => ({ ...wp, ...evalTPS(tps, wp.lat, wp.lng) })),
+    [tps]
+  )
+  const [photoPopup, setPhotoPopup] = useState<{ src: string; caption: string; x: number; y: number } | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const playSound = () => {
     if (!audioRef.current) audioRef.current = new Audio('/swoosh.mp3')
@@ -296,7 +310,7 @@ export default function MapPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const onMouseDown = (e: React.MouseEvent) => { isDragging.current = true; lastPos.current = { x: e.clientX, y: e.clientY } }
+  const onMouseDown = (e: React.MouseEvent) => { isDragging.current = true; lastPos.current = { x: e.clientX, y: e.clientY }; setPhotoPopup(null) }
   const onMouseMove = (e: React.MouseEvent) => {
     if (!isDragging.current || !containerRef.current) return
     const { clientWidth: w, clientHeight: h } = containerRef.current
@@ -363,6 +377,38 @@ export default function MapPage() {
               <image href="/osaka.png" x={last.x - 282} y={last.y - 33} width={252} height={66} />
             </>
           )}
+          {/* Photo pins — circular thumbnail markers along the route */}
+          <defs>
+            {photoPositions.map((_, i) => (
+              <clipPath key={i} id={`photo-clip-${i}`}>
+                <circle cx={0} cy={0} r={38} />
+              </clipPath>
+            ))}
+          </defs>
+          {photoPositions.map((p, i) => (
+            <g
+              key={i}
+              transform={`translate(${p.x}, ${p.y})`}
+              style={{ pointerEvents: 'auto', cursor: 'pointer' }}
+              onMouseEnter={e => {
+                const rect = (e.currentTarget as SVGGElement).getBoundingClientRect()
+                setPhotoPopup({ src: p.src, caption: p.caption, x: rect.left + rect.width / 2, y: rect.top })
+              }}
+              onMouseLeave={() => setPhotoPopup(null)}
+              onClick={e => {
+                e.stopPropagation()
+                const rect = (e.currentTarget as SVGGElement).getBoundingClientRect()
+                setPhotoPopup(prev => prev?.src === p.src && prev?.caption === p.caption ? null : { src: p.src, caption: p.caption, x: rect.left + rect.width / 2, y: rect.top })
+              }}
+            >
+              {/* white border ring */}
+              <circle r={46} fill="white" opacity={0.95} />
+              {/* photo thumbnail clipped to circle */}
+              <image href={p.src} x={-38} y={-38} width={76} height={76} clipPath={`url(#photo-clip-${i})`} preserveAspectRatio="xMidYMid slice" />
+              {/* cyan accent ring */}
+              <circle r={46} fill="none" stroke="#02F7F7" strokeWidth={5} opacity={0.8} />
+            </g>
+          ))}
         </svg>
       )}
       </div>
@@ -373,8 +419,8 @@ export default function MapPage() {
     </div>
 
     <div className="fixed top-4 right-4 sm:top-8 sm:right-8 pointer-events-none text-[#02F7F7] font-bold text-right uppercase flex flex-col items-end opacity-50" style={{ fontFamily: 'Times New Roman, serif' }}>
-      <span className="text-4xl sm:text-5xl lg:text-6xl leading-none">osaka</span>
-      <span className="text-3xl sm:text-4xl lg:text-5xl leading-none -mt-1">{kmDisplay} to tokyo</span>
+      <span className="text-4xl sm:text-5xl lg:text-6xl leading-none">tokyo</span>
+      <span className="text-3xl sm:text-4xl lg:text-5xl leading-none -mt-1">{kmDisplay} to osaka</span>
     </div>
 
     <button onClick={() => { playSound(); setAboutOpen(true) }} className="fixed bottom-0 right-0 cursor-pointer">
@@ -464,6 +510,26 @@ export default function MapPage() {
         {elapsed || '00:00:00'}
       </div>
     </div>
+
+    {/* Photo popup — shown on hover (desktop) or tap (mobile) */}
+    {photoPopup && (
+      <div
+        className="fixed z-40 pointer-events-none"
+        style={{ left: photoPopup.x, top: photoPopup.y, transform: 'translate(-50%, calc(-100% - 18px))' }}
+      >
+        <div className="bg-black/90 rounded overflow-hidden shadow-2xl border border-white/10" style={{ width: 220 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={photoPopup.src} alt="" className="w-full object-cover" style={{ maxHeight: 160 }} draggable={false} />
+          {photoPopup.caption && (
+            <p className="text-white text-xs px-3 py-2 opacity-60 uppercase tracking-wide" style={{ fontFamily: 'Times New Roman, serif' }}>
+              {photoPopup.caption}
+            </p>
+          )}
+        </div>
+        {/* downward arrow */}
+        <div className="mx-auto w-fit" style={{ borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderTop: '8px solid rgba(0,0,0,0.9)' }} />
+      </div>
+    )}
 
 </>
   )
