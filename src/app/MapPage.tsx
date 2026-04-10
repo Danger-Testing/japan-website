@@ -548,8 +548,13 @@ export default function MapPage() {
 
   const totalKm = routeCumDist[routeCumDist.length - 1] ?? null
   const remainingKm = isLive && riderKm !== null && totalKm !== null ? totalKm - riderKm : null
-  const toMi = (km: number) => (km * 0.621371).toFixed(1)
-  const kmDisplay = remainingKm !== null ? `${toMi(remainingKm)}mi` : totalKm !== null ? `${toMi(totalKm)}mi` : '--'
+  const TARGET_KMH = 25
+  const etaHours = (km: number) => {
+    const h = Math.floor(km / TARGET_KMH)
+    const m = Math.round((km / TARGET_KMH - h) * 60)
+    return m > 0 ? `${h}h ${m}m` : `${h}h`
+  }
+  const kmDisplay = remainingKm !== null ? etaHours(remainingKm) : totalKm !== null ? etaHours(totalKm) : '--'
   const timeDisplay = isLive && elapsed ? elapsed : clockTime
 
   return (
