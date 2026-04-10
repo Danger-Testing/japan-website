@@ -245,7 +245,6 @@ export default function MapPage() {
   const [aboutOpen, setAboutOpen] = useState(false)
   const [aboutSlide, setAboutSlide] = useState(0)
   const clockTime = useCurrentTime()
-  const heartRate = useLiveHeartRate()
   const tps = useMemo(() => buildTPS(CONTROL_POINTS), [])
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 })
   const [fanText, setFanText] = useState('')
@@ -551,6 +550,7 @@ export default function MapPage() {
   const remainingKm = isLive && riderKm !== null && totalKm !== null ? totalKm - riderKm : null
   const toMi = (km: number) => (km * 0.621371).toFixed(1)
   const kmDisplay = remainingKm !== null ? `${toMi(remainingKm)}mi` : totalKm !== null ? `${toMi(totalKm)}mi` : '--'
+  const timeDisplay = isLive && elapsed ? elapsed : clockTime
 
   return (
     <>
@@ -629,12 +629,9 @@ export default function MapPage() {
 
     <div className="fixed top-3 left-3 sm:top-8 sm:left-8 z-30 flex flex-col items-start gap-2">
       <div className="pointer-events-none flex flex-col">
-        <span className="text-[#02F7F7] font-bold text-lg sm:text-3xl lg:text-4xl uppercase opacity-50 flex items-center gap-2" style={{ fontFamily: 'Times New Roman, serif' }}>
-          <span style={{ animationDuration: `${(60 / heartRate).toFixed(2)}s`, display: 'inline-block' }} className="animate-pulse">♥</span>
-          {heartRate} bpm
-        </span>
+        <span className="text-[#02F7F7] font-bold text-2xl sm:text-5xl lg:text-6xl uppercase opacity-50" style={{ fontFamily: 'Times New Roman, serif' }}>{timeDisplay}</span>
       </div>
-      {/* Story viewer — mobile only, under BPM */}
+      {/* Story viewer — mobile only, under clock */}
       <div
         className="sm:hidden relative w-[70px] cursor-pointer overflow-hidden"
         style={{ aspectRatio: '9/16' }}
@@ -654,7 +651,7 @@ export default function MapPage() {
       </div>
     </div>
 
-    {/* new.png — left side, centered between top BPM and bottom screen widget */}
+    {/* new.png — left side, centered between top clock and bottom screen widget */}
     <div className="hidden sm:flex fixed left-3 sm:left-8 z-30 pointer-events-none items-center top-[72px] bottom-[104px] sm:top-[136px] sm:bottom-[234px] lg:top-[150px] lg:bottom-[312px]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/new.png" alt="" className="w-20 sm:w-32 lg:w-44" draggable={false} />
