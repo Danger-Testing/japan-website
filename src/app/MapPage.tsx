@@ -6,6 +6,29 @@ import { useLocation } from '@/hooks/useLocation'
 
 const RouteMapLeaflet = dynamic(() => import('@/components/RouteMapLeaflet'), { ssr: false })
 
+const STORIES = [
+  '/ig/story_01_image_20260409_053307.jpg',
+  '/ig/story_02_image_20260409_053328.jpg',
+  '/ig/story_03_image_20260409_073814.jpg',
+  '/ig/story_04_image_20260409_073820.jpg',
+  '/ig/story_05_video_20260409_073847.mp4',
+  '/ig/story_06_image_20260409_073853.jpg',
+  '/ig/story_07_image_20260409_073906.jpg',
+  '/ig/story_08_image_20260409_074000.jpg',
+  '/ig/story_09_image_20260409_090353.jpg',
+  '/ig/story_10_image_20260409_143305.jpg',
+  '/ig/story_11_image_20260409_143339.jpg',
+  '/ig/story_12_video_20260409_143354.mp4',
+  '/ig/story_13_video_20260409_143411.mp4',
+  '/ig/story_14_image_20260409_143421.jpg',
+  '/ig/story_15_video_20260409_143452.mp4',
+  '/ig/story_16_image_20260409_143537.jpg',
+  '/ig/story_17_image_20260409_143557.jpg',
+  '/ig/story_18_image_20260409_143745.jpg',
+  '/ig/story_19_video_20260409_144231.mp4',
+  '/ig/story_20_image_20260409_150146.jpg',
+]
+
 const CONTROL_POINTS = [
   { lat: 43.0618, lon: 141.3545, x: 2128, y:  285 },
   { lat: 38.2688, lon: 140.8721, x: 2294, y:  898 },
@@ -180,6 +203,8 @@ export default function MapPage() {
   const heartRate = useLiveHeartRate()
   const tps = useMemo(() => buildTPS(CONTROL_POINTS), [])
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 })
+  const [fanText, setFanText] = useState('')
+  const [fanSent, setFanSent] = useState(false)
 
   const [communityPhotos, setCommunityPhotos] = useState<Array<{
     id: number; lat: number; lng: number; locality: string; administrative_area: string; caption: string | null
@@ -218,6 +243,14 @@ export default function MapPage() {
     return zones
   }, [routePts, routeGeo, communityPhotos])
   const [photoPopup, setPhotoPopup] = useState<{ src: string; caption: string } | null>(null)
+  const [storyIdx, setStoryIdx] = useState(0)
+
+  // Auto-advance images; videos self-advance via onEnded
+  useEffect(() => {
+    if (STORIES[storyIdx].endsWith('.mp4')) return
+    const t = setTimeout(() => setStoryIdx(i => (i + 1) % STORIES.length), 5000)
+    return () => clearTimeout(t)
+  }, [storyIdx])
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const playSound = () => {
@@ -528,17 +561,72 @@ export default function MapPage() {
       </svg>
     )}
 
-    <div className="fixed top-3 left-3 sm:top-8 sm:left-8 z-30 pointer-events-none flex flex-col">
-      <span className="text-[#02F7F7] font-bold text-2xl sm:text-5xl lg:text-6xl uppercase opacity-50" style={{ fontFamily: 'Times New Roman, serif' }}>{timeDisplay}</span>
-      <span className="text-[#02F7F7] font-bold text-lg sm:text-3xl lg:text-4xl uppercase opacity-50 flex items-center gap-2" style={{ fontFamily: 'Times New Roman, serif' }}>
-        <span style={{ animationDuration: `${(60 / heartRate).toFixed(2)}s`, display: 'inline-block' }} className="animate-pulse">♥</span>
-        {heartRate} bpm
-      </span>
+    <div className="fixed top-3 left-3 sm:top-8 sm:left-8 z-30 flex flex-col items-start gap-2">
+      <div className="pointer-events-none flex flex-col">
+        <span className="text-[#02F7F7] font-bold text-2xl sm:text-5xl lg:text-6xl uppercase opacity-50" style={{ fontFamily: 'Times New Roman, serif' }}>{timeDisplay}</span>
+        <span className="text-[#02F7F7] font-bold text-lg sm:text-3xl lg:text-4xl uppercase opacity-50 flex items-center gap-2" style={{ fontFamily: 'Times New Roman, serif' }}>
+          <span style={{ animationDuration: `${(60 / heartRate).toFixed(2)}s`, display: 'inline-block' }} className="animate-pulse">♥</span>
+          {heartRate} bpm
+        </span>
+      </div>
+      {/* Story viewer — mobile only, under BPM */}
+      <div
+        className="sm:hidden relative w-[70px] cursor-pointer overflow-hidden"
+        style={{ aspectRatio: '9/16' }}
+        onClick={() => setStoryIdx(i => (i + 1) % STORIES.length)}
+      >
+        {STORIES[storyIdx].endsWith('.mp4') ? (
+          <video key={storyIdx} src={STORIES[storyIdx]} className="w-full h-full object-cover" autoPlay muted playsInline onEnded={() => setStoryIdx(i => (i + 1) % STORIES.length)} />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={storyIdx} src={STORIES[storyIdx]} alt="" className="w-full h-full object-cover" draggable={false} />
+        )}
+        <div className="absolute top-1 left-1 right-1 flex gap-0.5 pointer-events-none">
+          {STORIES.map((_, i) => (
+            <div key={i} className={`h-0.5 flex-1 rounded-full ${i === storyIdx ? 'bg-white' : 'bg-white/30'}`} />
+          ))}
+        </div>
+      </div>
     </div>
 
-    <div className="fixed top-3 right-3 sm:top-8 sm:right-8 z-30 pointer-events-none text-[#02F7F7] font-bold text-right uppercase flex flex-col items-end opacity-50" style={{ fontFamily: 'Times New Roman, serif' }}>
-      <span className="text-2xl sm:text-5xl lg:text-6xl leading-none">tokyo</span>
-      <span className="text-xl sm:text-4xl lg:text-5xl leading-none -mt-1">{kmDisplay} to osaka</span>
+    {/* new.png — left side, centered between top BPM and bottom screen widget */}
+    <div className="hidden sm:flex fixed left-3 sm:left-8 z-30 pointer-events-none items-center top-[72px] bottom-[104px] sm:top-[136px] sm:bottom-[234px] lg:top-[150px] lg:bottom-[312px]">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/new.png" alt="" className="w-20 sm:w-32 lg:w-44" draggable={false} />
+    </div>
+
+    <div className="fixed top-3 right-3 sm:top-8 sm:right-8 z-30 flex flex-col items-end gap-2">
+      <div className="pointer-events-none text-[#02F7F7] font-bold text-right uppercase flex flex-col items-end opacity-50" style={{ fontFamily: 'Times New Roman, serif' }}>
+        <span className="text-2xl sm:text-5xl lg:text-6xl leading-none">tokyo</span>
+        <span className="text-xl sm:text-4xl lg:text-5xl leading-none -mt-1">{kmDisplay} to osaka</span>
+      </div>
+      {/* Story viewer — below osaka text, desktop only */}
+      <div
+        className="hidden sm:block relative w-[90px] sm:w-[150px] lg:w-[200px] cursor-pointer overflow-hidden"
+        style={{ aspectRatio: '9/16' }}
+        onClick={() => setStoryIdx(i => (i + 1) % STORIES.length)}
+      >
+        {STORIES[storyIdx].endsWith('.mp4') ? (
+          <video
+            key={storyIdx}
+            src={STORIES[storyIdx]}
+            className="w-full h-full object-cover"
+            autoPlay muted playsInline
+            onEnded={() => setStoryIdx(i => (i + 1) % STORIES.length)}
+          />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={storyIdx} src={STORIES[storyIdx]} alt="" className="w-full h-full object-cover" draggable={false} />
+        )}
+        <div className="absolute top-1 left-1 right-1 flex gap-0.5 pointer-events-none">
+          {STORIES.map((_, i) => (
+            <div key={i} className={`h-0.5 flex-1 rounded-full ${i === storyIdx ? 'bg-white' : 'bg-white/30'}`} />
+          ))}
+        </div>
+      </div>
+      <p className="hidden sm:block text-[#02F7F7] font-bold uppercase opacity-50 text-xs sm:text-sm lg:text-base tracking-wide pointer-events-none" style={{ fontFamily: 'Times New Roman, serif' }}>
+        live from ig
+      </p>
     </div>
 
     <button onClick={() => { playSound(); setAboutOpen(true) }} className="fixed bottom-0 right-0 z-30 cursor-pointer">
@@ -611,7 +699,6 @@ export default function MapPage() {
     <div className="fixed bottom-0 left-0 z-30 pointer-events-none w-[160px] sm:w-[360px] lg:w-[480px] [container-type:inline-size]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/screen.png" alt="" className="w-full" />
-      {/* Screen zone corners in image px (1014×659): x1=273 y1=525 x2=904 y2=631 */}
       <div className="absolute flex items-center justify-center text-[#02F7F7] font-bold tracking-wider uppercase overflow-hidden opacity-50" style={{ fontFamily: 'Times New Roman, serif', fontSize: '13cqw',
         left:   `${273 / 1014 * 100}%`,
         top:    `${525 / 659 * 100}%`,
@@ -621,6 +708,7 @@ export default function MapPage() {
         {elapsed || '00:00:00'}
       </div>
     </div>
+
 
     {/* Photo popup — z-10 so route SVG (z-20) renders above it */}
     {photoPopup && (
@@ -634,6 +722,37 @@ export default function MapPage() {
         )}
       </div>
     )}
+
+    {/* Fan post drawing canvas — centered at bottom */}
+    <div className="hidden sm:flex fixed bottom-2 left-1/2 -translate-x-1/2 z-30 flex-col items-center gap-1">
+      <div className="relative" onMouseDown={e => e.stopPropagation()}>
+        <input
+          type="text"
+          value={fanText}
+          onChange={e => setFanText(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.form?.requestSubmit() }}
+          placeholder="write something for toni..."
+          className="block w-[280px] px-3 py-2 text-sm font-bold uppercase outline-none bg-transparent placeholder:text-[rgba(2,247,247,0.5)]"
+          style={{
+            fontFamily: 'Times New Roman, serif',
+            color: 'rgba(2,247,247,0.5)',
+            border: '1.5px solid rgba(2,247,247,0.5)',
+            caretColor: 'rgba(2,247,247,0.5)',
+          }}
+        />
+        <button
+          className="absolute bottom-1.5 right-2 text-[10px] uppercase tracking-wide font-bold cursor-pointer"
+          style={{ fontFamily: 'Times New Roman, serif', color: 'rgba(2,247,247,0.5)' }}
+          onClick={async () => {
+            if (!fanText.trim()) return
+            await fetch('/api/fan-sign', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: fanText.trim() }) })
+            setFanText('')
+            setFanSent(true)
+            setTimeout(() => setFanSent(false), 2000)
+          }}
+        >{fanSent ? 'sent!' : 'send'}</button>
+      </div>
+    </div>
 
 </>
   )
