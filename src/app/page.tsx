@@ -210,7 +210,7 @@ export default function MapPage() {
   useEffect(() => {
     if (!containerRef.current) return
     const { clientWidth: w, clientHeight: h } = containerRef.current
-    const z = w < 640 ? 1.5 : 2.5
+    const z = w < 640 ? 1.5 : w >= 1024 ? 2.0 : 2.5
     zoomRef.current = z
     setZoom(z)
     // Route midpoint is ~51.5% across, ~66.8% down in the image
@@ -359,8 +359,8 @@ export default function MapPage() {
           )}
           {routePts.length > 1 && (
             <>
-              <image href="/tokyo.png" x={first.x - 175} y={first.y - 120} width={350} height={80} />
-              <image href="/osaka.png" x={last.x  - 158} y={last.y  - 120} width={315} height={83} />
+              <image href="/tokyo.png" x={first.x + 30} y={first.y - 60} width={280} height={64} />
+              <image href="/osaka.png" x={last.x - 282} y={last.y - 33} width={252} height={66} />
             </>
           )}
         </svg>
