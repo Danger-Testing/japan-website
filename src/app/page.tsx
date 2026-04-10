@@ -84,14 +84,6 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
-// Route photo pins — add your own: { lat, lng, src: '/your-photo.jpg', caption: '...' }
-const PHOTO_WAYPOINTS = [
-  { lat: 35.6847, lng: 139.7746, src: '/toni.png',   caption: 'Nihonbashi, Tokyo — Start' },
-  { lat: 35.2323, lng: 139.0615, src: '/japan.jpeg', caption: 'Hakone Mountain' },
-  { lat: 34.9756, lng: 138.3828, src: '/japan.jpeg', caption: 'Shizuoka' },
-  { lat: 35.1709, lng: 136.8815, src: '/japan.jpeg', caption: 'Nagoya' },
-  { lat: 34.6704, lng: 135.5003, src: '/toni.png',   caption: 'Osaka — Finish' },
-]
 
 const ABOUT_SLIDES = [
   { key: 'toni',  title: 'Toni',  text: "I'm Toni, I've been riding fixed gear bikes for 15 years, I became an alleycat racer extraordinaire who started falling in love with the idea of doing ultra distance rides, some on fixed gear bikes for the added challenge. I did this Tokyo to Osaka ride in December 2024 after hearing about it while I was in Japan, I prepared for 3 days last minute, and went for the ride on a whim. It took me 28 hours 19 minutes. The last 80 miles of that ride was in freezing 34 degrees F rain, which was where all my elapsed time went. Upon finishing, I hear The Legend in Japan has it that a guy named Yuki did the cannonball on a brakeless fixed gear in 22 hours. Since then I've wanted to reattempt it, I think I am capable of getting an under 22 hours time, I just need the weather to align with me." },
@@ -139,11 +131,26 @@ export default function MapPage() {
   const [aboutSlide, setAboutSlide] = useState(0)
   const clockTime = useCurrentTime()
   const tps = useMemo(() => buildTPS(CONTROL_POINTS), [])
+
+  const [communityPhotos, setCommunityPhotos] = useState<Array<{
+    id: number; lat: number; lng: number; locality: string; administrative_area: string; caption: string | null
+  }>>([])
+  useEffect(() => {
+    fetch('/api/community-photos')
+      .then(r => r.json())
+      .then(data => setCommunityPhotos(data.results ?? []))
+      .catch(() => {})
+  }, [])
+
   const photoPositions = useMemo(
-    () => PHOTO_WAYPOINTS.map(wp => ({ ...wp, ...evalTPS(tps, wp.lat, wp.lng) })),
-    [tps]
+    () => communityPhotos.map(p => ({
+      ...evalTPS(tps, p.lat, p.lng),
+      src: `https://ridewithgps.com/photos/${p.id}/large.jpg`,
+      caption: p.caption ?? [p.locality, p.administrative_area].filter(Boolean).join(', '),
+    })),
+    [communityPhotos, tps]
   )
-  const [photoPopup, setPhotoPopup] = useState<{ src: string; caption: string; x: number; y: number } | null>(null)
+  const [photoPopup, setPhotoPopup] = useState<{ src: string; caption: string } | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const playSound = () => {
     if (!audioRef.current) audioRef.current = new Audio('/swoosh.mp3')
@@ -377,37 +384,20 @@ export default function MapPage() {
               <image href="/osaka.png" x={last.x - 282} y={last.y - 33} width={252} height={66} />
             </>
           )}
-          {/* Photo pins — circular thumbnail markers along the route */}
-          <defs>
-            {photoPositions.map((_, i) => (
-              <clipPath key={i} id={`photo-clip-${i}`}>
-                <circle cx={0} cy={0} r={38} />
-              </clipPath>
-            ))}
-          </defs>
+          {/* Photo hit areas — invisible, just capture hover/tap to trigger popup */}
           {photoPositions.map((p, i) => (
-            <g
+            <circle
               key={i}
-              transform={`translate(${p.x}, ${p.y})`}
+              cx={p.x} cy={p.y} r={60}
+              fill="transparent"
               style={{ pointerEvents: 'auto', cursor: 'pointer' }}
-              onMouseEnter={e => {
-                const rect = (e.currentTarget as SVGGElement).getBoundingClientRect()
-                setPhotoPopup({ src: p.src, caption: p.caption, x: rect.left + rect.width / 2, y: rect.top })
-              }}
+              onMouseEnter={() => setPhotoPopup({ src: p.src, caption: p.caption })}
               onMouseLeave={() => setPhotoPopup(null)}
               onClick={e => {
                 e.stopPropagation()
-                const rect = (e.currentTarget as SVGGElement).getBoundingClientRect()
-                setPhotoPopup(prev => prev?.src === p.src && prev?.caption === p.caption ? null : { src: p.src, caption: p.caption, x: rect.left + rect.width / 2, y: rect.top })
+                setPhotoPopup(prev => prev?.src === p.src && prev?.caption === p.caption ? null : { src: p.src, caption: p.caption })
               }}
-            >
-              {/* white border ring */}
-              <circle r={46} fill="white" opacity={0.95} />
-              {/* photo thumbnail clipped to circle */}
-              <image href={p.src} x={-38} y={-38} width={76} height={76} clipPath={`url(#photo-clip-${i})`} preserveAspectRatio="xMidYMid slice" />
-              {/* cyan accent ring */}
-              <circle r={46} fill="none" stroke="#02F7F7" strokeWidth={5} opacity={0.8} />
-            </g>
+            />
           ))}
         </svg>
       )}
@@ -511,23 +501,18 @@ export default function MapPage() {
       </div>
     </div>
 
-    {/* Photo popup — shown on hover (desktop) or tap (mobile) */}
+    {/* Photo popup — large centered overlay, 50vh tall */}
     {photoPopup && (
-      <div
-        className="fixed z-40 pointer-events-none"
-        style={{ left: photoPopup.x, top: photoPopup.y, transform: 'translate(-50%, calc(-100% - 18px))' }}
-      >
-        <div className="bg-black/90 rounded overflow-hidden shadow-2xl border border-white/10" style={{ width: 220 }}>
+      <div className="fixed inset-0 z-40 flex items-center justify-center pointer-events-none">
+        <div className="bg-black/80 rounded overflow-hidden shadow-2xl border border-white/10 flex flex-col" style={{ height: '50vh', aspectRatio: '4/3' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={photoPopup.src} alt="" className="w-full object-cover" style={{ maxHeight: 160 }} draggable={false} />
+          <img src={photoPopup.src} alt="" className="flex-1 w-full object-cover min-h-0" draggable={false} />
           {photoPopup.caption && (
-            <p className="text-white text-xs px-3 py-2 opacity-60 uppercase tracking-wide" style={{ fontFamily: 'Times New Roman, serif' }}>
+            <p className="flex-shrink-0 text-white text-sm px-4 py-2 opacity-60 uppercase tracking-wide" style={{ fontFamily: 'Times New Roman, serif' }}>
               {photoPopup.caption}
             </p>
           )}
         </div>
-        {/* downward arrow */}
-        <div className="mx-auto w-fit" style={{ borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderTop: '8px solid rgba(0,0,0,0.9)' }} />
       </div>
     )}
 
