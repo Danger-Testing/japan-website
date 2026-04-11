@@ -224,7 +224,7 @@ function useCountdownToEST4am() {
 
 
 const GLOBAL_START_MS = 1775862765599
-const AVG_SPEED_MPH = 15.5
+const TOTAL_HOURS = 26
 
 export default function MapPage() {
   const [routePts, setRoutePts] = useState<{ x: number; y: number }[]>([])
@@ -355,20 +355,20 @@ export default function MapPage() {
     return () => clearInterval(id)
   }, [isLive, sessionStart])
 
-  // Animated miles remaining + bike position — ticks every second based on elapsed time × avg speed
+  // Animated miles remaining + bike position — ticks every second, full route in TOTAL_HOURS
   useEffect(() => {
     const totalKmVal = routeCumDist[routeCumDist.length - 1] ?? null
     if (totalKmVal === null) return
     const totalMi = totalKmVal * 0.621371
     const update = () => {
       const elapsedH = (Date.now() - GLOBAL_START_MS) / 3_600_000
-      const coveredMi = elapsedH * AVG_SPEED_MPH
-      const remaining = Math.max(0, totalMi - coveredMi)
+      const fraction = Math.min(elapsedH / TOTAL_HOURS, 1)
+      const remaining = Math.max(0, totalMi * (1 - fraction))
       setMilesDisplay(`${remaining.toFixed(0)}mi`)
 
       // Move bike along route proportionally to km covered
       if (routePts.length >= 2) {
-        const coveredKm = Math.min(coveredMi * 1.60934, totalKmVal)
+        const coveredKm = Math.min(fraction * totalKmVal, totalKmVal)
         let idx = routeCumDist.findIndex(d => d >= coveredKm)
         if (idx < 0) idx = routeCumDist.length - 1
         if (idx === 0) {
