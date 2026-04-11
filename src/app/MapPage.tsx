@@ -225,6 +225,7 @@ function useCountdownToEST4am() {
 
 const GLOBAL_START_MS = 1775862765599
 const TOTAL_HOURS = 26
+const PAUSED = true
 
 export default function MapPage() {
   const [routePts, setRoutePts] = useState<{ x: number; y: number }[]>([])
@@ -351,6 +352,7 @@ export default function MapPage() {
       )
     }
     update()
+    if (PAUSED) return
     const id = setInterval(update, 1000)
     return () => clearInterval(id)
   }, [isLive, sessionStart])
@@ -384,6 +386,7 @@ export default function MapPage() {
       }
     }
     update()
+    if (PAUSED) return
     const id = setInterval(update, 1000)
     return () => clearInterval(id)
   }, [routeCumDist, routePts])
