@@ -245,6 +245,7 @@ export default function MapPage() {
   const touchDidMove = useRef(false)
   const [elapsed, setElapsed] = useState('')
   const [milesDisplay, setMilesDisplay] = useState('--')
+  const [animBikerPos, setAnimBikerPos] = useState<{ x: number; y: number } | null>(null)
   const [welcomeOpen, setWelcomeOpen] = useState(true)
   const [aboutOpen, setAboutOpen] = useState(false)
   const [aboutSlide, setAboutSlide] = useState(0)
@@ -315,12 +316,13 @@ export default function MapPage() {
     return evalTPS(tps, location.lat, location.lng)
   }, [location, isLive, tps])
 
-  // Biker indicator: live position or Tokyo start
+  // Biker indicator: live GPS → animated miles position → Tokyo start
   const bikerPos = useMemo(() => {
     if (riderPos) return riderPos
+    if (animBikerPos) return animBikerPos
     if (routePts.length > 0) return routePts[0]
     return null
-  }, [riderPos, routePts])
+  }, [riderPos, animBikerPos, routePts])
 
   // Distance along route to nearest point to rider
   const riderKm = useMemo(() => {
@@ -353,21 +355,38 @@ export default function MapPage() {
     return () => clearInterval(id)
   }, [isLive, sessionStart])
 
-  // Animated miles remaining — ticks every second based on elapsed time × avg speed
+  // Animated miles remaining + bike position — ticks every second based on elapsed time × avg speed
   useEffect(() => {
     const totalKmVal = routeCumDist[routeCumDist.length - 1] ?? null
     if (totalKmVal === null) return
     const totalMi = totalKmVal * 0.621371
     const update = () => {
       const elapsedH = (Date.now() - GLOBAL_START_MS) / 3_600_000
-      const covered = elapsedH * AVG_SPEED_MPH
-      const remaining = Math.max(0, totalMi - covered)
+      const coveredMi = elapsedH * AVG_SPEED_MPH
+      const remaining = Math.max(0, totalMi - coveredMi)
       setMilesDisplay(`${remaining.toFixed(0)}mi`)
+
+      // Move bike along route proportionally to km covered
+      if (routePts.length >= 2) {
+        const coveredKm = Math.min(coveredMi * 1.60934, totalKmVal)
+        let idx = routeCumDist.findIndex(d => d >= coveredKm)
+        if (idx < 0) idx = routeCumDist.length - 1
+        if (idx === 0) {
+          setAnimBikerPos(routePts[0])
+        } else {
+          const d0 = routeCumDist[idx - 1]
+          const d1 = routeCumDist[idx]
+          const t = d1 === d0 ? 0 : (coveredKm - d0) / (d1 - d0)
+          const p0 = routePts[idx - 1]
+          const p1 = routePts[idx]
+          setAnimBikerPos({ x: p0.x + (p1.x - p0.x) * t, y: p0.y + (p1.y - p0.y) * t })
+        }
+      }
     }
     update()
     const id = setInterval(update, 1000)
     return () => clearInterval(id)
-  }, [routeCumDist])
+  }, [routeCumDist, routePts])
 
   useEffect(() => {
     fetch('/japan.gpx')
